@@ -33,14 +33,7 @@ class GuiState(object):
         self.eff_pen_label = Label(EFF_PEN_ALIAS, EffPenLabelSettings)
         self.kill_label = Label(KILL_ALIAS, KillLabelSettings)
         self.gun_label = Label(GUN_ALIAS, GunLabelSettings)
-        self.labels = [
-            self.armor_label,
-            self.pen_label,
-            self.angle_label,
-            self.eff_pen_label,
-            self.kill_label,
-            self.gun_label,
-        ]
+        self.labels = [self.armor_label, self.pen_label, self.angle_label, self.eff_pen_label, self.kill_label, self.gun_label]
 
     def is_visible(self):
         return any(label.visible for label in self.labels)
@@ -52,25 +45,10 @@ class GuiState(object):
         if pade_track.TrackState.ENABLED and pade_track.TrackState.track_visible:
             pade_track.hide_track_label()
 
-    def update_gui(
-        self,
-        armor_value,
-        prob,
-        ricochet,
-        hit_body,
-        hit_track,
-        hit_gun,
-        hit_angle,
-        avg_pen,
-        kill_prob,
-    ):
+    def update_gui(self, armor_value, prob, ricochet, hit_body, hit_track, hit_gun, hit_angle, avg_pen, kill_prob):
         armor_value = int(armor_value)
         avg_pen = int(avg_pen)
-        armor_format_values = {
-            "value": armor_value,
-            "armor": armor_value,
-            "penetration": avg_pen,
-        }
+        armor_format_values = {"value": armor_value, "armor": armor_value, "penetration": avg_pen}
 
         if ricochet:
             color = Colors.RED
@@ -86,18 +64,11 @@ class GuiState(object):
                 self.kill_label.hide()
         elif not hit_body:
             color = Colors.RED
-            # If collision processing already produced effective armor, keep the
-            # armor label visible instead of hiding useful data for screens/tracks.
             if armor_value > 0 and self.armor_label.settings.ENABLED:
                 self.armor_label.update_gui(armor_value, color, armor_format_values)
-                if self.pen_label.visible:
-                    self.pen_label.hide()
-                if self.angle_label.visible:
-                    self.angle_label.hide()
-                if self.eff_pen_label.visible:
-                    self.eff_pen_label.hide()
-                if self.kill_label.visible:
-                    self.kill_label.hide()
+                for label in (self.pen_label, self.angle_label, self.eff_pen_label, self.kill_label):
+                    if label.visible:
+                        label.hide()
             else:
                 self.hide_all()
         else:
@@ -112,9 +83,7 @@ class GuiState(object):
                 self.eff_pen_label.update_gui(avg_pen, color)
             if self.kill_label.settings.ENABLED:
                 if kill_prob > 0:
-                    self.kill_label.update_gui(
-                        kill_prob, Colors.get_color_from_prob(kill_prob)
-                    )
+                    self.kill_label.update_gui(kill_prob, Colors.get_color_from_prob(kill_prob))
                 elif self.kill_label.visible:
                     self.kill_label.hide()
 
@@ -125,7 +94,7 @@ class GuiState(object):
                 self.gun_label.hide()
 
         if pade_track.TrackState.ENABLED:
-            if hit_track and (color == Colors.GREEN or color == Colors.YELLOW):
+            if hit_track and color in (Colors.GREEN, Colors.YELLOW):
                 pade_track.update_track_label(color)
             elif pade_track.TrackState.track_visible:
                 pade_track.hide_track_label()
@@ -141,7 +110,7 @@ class Label(object):
         self.settings = settings
         self.visible = False
         self.last_text = None
-        properties = {
+        g_guiFlash.createComponent(alias, COMPONENT_TYPE.LABEL, {
             "isHtml": True,
             "text": "",
             "glowfilter": _build_glowfilter(),
@@ -150,8 +119,7 @@ class Label(object):
             "x": settings.X_OFFSET,
             "y": settings.Y_OFFSET,
             "visible": False,
-        }
-        g_guiFlash.createComponent(alias, COMPONENT_TYPE.LABEL, properties)
+        })
 
     def hide(self):
         if self.visible:
@@ -168,9 +136,7 @@ class Label(object):
         except (KeyError, ValueError):
             interior_text = str(value)
         new_text = "<font size='{font_size}' color='#{color}' face='$FieldFont'>{interior_text}</font>".format(
-            font_size=self.settings.FONT_SIZE,
-            color=color,
-            interior_text=interior_text,
+            font_size=self.settings.FONT_SIZE, color=color, interior_text=interior_text
         )
         if new_text == self.last_text and self.visible:
             return
@@ -179,14 +145,13 @@ class Label(object):
         g_guiFlash.updateComponent(self.alias, {"text": new_text, "visible": True})
 
     def update_properties(self):
-        new_properties = {
+        if not self.settings.ENABLED:
+            self.hide()
+        g_guiFlash.updateComponent(self.alias, {
             "x": self.settings.X_OFFSET,
             "y": self.settings.Y_OFFSET,
             "glowfilter": _build_glowfilter(),
-        }
-        if not self.settings.ENABLED:
-            self.hide()
-        g_guiFlash.updateComponent(self.alias, new_properties)
+        })
 
 
 class AngleLabel(Label):
