@@ -42,13 +42,16 @@ def migrate_config(user_config):
                 if key not in user_config[section]:
                     user_config[section][key] = value
                     changed = True
-
-    # Formats, colors and shadow are intentionally hardcoded now.
     for section in ("armor_label", "pen_label", "angle_label", "eff_pen_label", "kill_label", "gun_label"):
-        user_config[section]["label_format"] = DEFAULT_CONFIG[section]["label_format"]
-    user_config["colors"] = DEFAULT_CONFIG["colors"].copy()
-    user_config["shadow"] = DEFAULT_CONFIG["shadow"].copy()
-
+        if user_config[section].get("label_format") != DEFAULT_CONFIG[section]["label_format"]:
+            user_config[section]["label_format"] = DEFAULT_CONFIG[section]["label_format"]
+            changed = True
+    if user_config.get("colors") != DEFAULT_CONFIG["colors"]:
+        user_config["colors"] = DEFAULT_CONFIG["colors"].copy()
+        changed = True
+    if user_config.get("shadow") != DEFAULT_CONFIG["shadow"]:
+        user_config["shadow"] = DEFAULT_CONFIG["shadow"].copy()
+        changed = True
     if changed:
         with open(CONFIG_PATH, "w") as f:
             json.dump(user_config, f, indent=4)
@@ -85,7 +88,6 @@ def save_flat_config(settings):
 
 
 if not os.path.isfile(CONFIG_PATH):
-    # Keep old user toggles/positions when upgrading, but move them under unicorn.ares.
     if os.path.isfile(LEGACY_CONFIG_PATH):
         if not os.path.exists(CONFIG_FOLDER):
             os.makedirs(CONFIG_FOLDER)
