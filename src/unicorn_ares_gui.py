@@ -17,7 +17,7 @@ except Exception:
     ModDynAccessor = None
     _OPENWG_OK = False
 
-from pade_config import get_config
+from unicorn_ares_config import get_config
 
 LOG = logging.getLogger('[unicorn.ares ArmorCalculator]')
 RES_MAP_ITEM_ID = 'mods/unicorn_ares/ArmorCalculatorBattle/layoutID'
