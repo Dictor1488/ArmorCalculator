@@ -18,12 +18,11 @@ $ModName = "unicorn.ares-armor-calculator-$ModVersion"
 $OutFile = Join-Path $OutDir "$ModName.wotmod"
 
 $Modules = @(
-    "mod_armor_pen_calculator.py",
-    "pade_constants.py",
-    "pade_gui.py",
-    "pade_config.py",
-    "unicorn_ares_gui.py",
-    "mod_pade_settings_gui.py"
+    "mod_unicorn_ares_armor.py",
+    "mod_unicorn_ares_settings.py",
+    "unicorn_ares_config.py",
+    "unicorn_ares_constants.py",
+    "unicorn_ares_gui.py"
 )
 
 if (Test-Path $ResDir) {
