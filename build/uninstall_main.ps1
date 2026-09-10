@@ -1,11 +1,23 @@
+param(
+    [string]$GameRoot = "C:\\Games\\World_of_Tanks_EU",
+    [string]$GameVersion = "2.4.0.5429"
+)
 
-$DEST = "C:\Program Files\World_of_Tanks_NA\res_mods\2.3.0.1\scripts\client\gui\mods"
+$ResModsRoot = Join-Path $GameRoot ("res_mods\\{0}" -f $GameVersion)
+$ModsDest = Join-Path $ResModsRoot "scripts\client\gui\mods"
 
-Remove-Item $DEST/mod_armor_pen_calculator.pyc -Force
-Remove-Item $DEST/pade_constants.pyc -Force
-Remove-Item $DEST/pade_gui.pyc -Force
-Remove-Item $DEST/pade_config.pyc -Force
-Remove-Item $DEST/mod_pade_settings_gui.pyc -Force
-Remove-Item $DEST/pade_track.pyc -Force
+$Files = @(
+    "mod_unicorn_ares_armor.pyc",
+    "mod_unicorn_ares_settings.pyc",
+    "unicorn_ares_config.pyc",
+    "unicorn_ares_constants.pyc",
+    "unicorn_ares_gui.pyc"
+)
+foreach ($File in $Files) {
+    Remove-Item (Join-Path $ModsDest $File) -Force -ErrorAction SilentlyContinue
+}
 
-Write-Output "Removed all 6 main branch files from '$DEST'"
+Remove-Item (Join-Path $ResModsRoot "gui\gameface\mods\unicorn_ares\ArmorCalculator") -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item (Join-Path $ResModsRoot "mods\configs\res_map\armor_calculator_gameface.json") -Force -ErrorAction SilentlyContinue
+
+Write-Output "Removed unicorn.ares Armor Calculator from '$ResModsRoot'"
