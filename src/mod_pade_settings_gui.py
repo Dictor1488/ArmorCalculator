@@ -6,85 +6,36 @@ try:
 except ImportError:
     getClientLanguage = None
 
-from pade_constants import (
-    ArmorLabelSettings,
-    PenLabelSettings,
-    AngleLabelSettings,
-    EffPenLabelSettings,
-    KillLabelSettings,
-    GunLabelSettings,
-)
+from pade_constants import ArmorLabelSettings, PenLabelSettings, AngleLabelSettings, EffPenLabelSettings, KillLabelSettings, GunLabelSettings
 from pade_config import save_flat_config
 from pade_gui import gui_state
-
 
 mod_linkage = "unicorn_ares_armor_calculator"
 modDataVersion = 4
 
 TRANSLATIONS = {
-    "en": {
-        "mod_name": "unicorn.ares Armor Calculator",
-        "main_section": "Display",
-        "armor_enable": "Penetration / armor",
-        "prob_enable": "Penetration chance",
-        "angle_enable": "Impact angle",
-        "eff_enable": "Separate penetration",
-        "kill_enable": "Kill chance",
-        "gun_enable": "Gun blocking",
-        "position_section": "Main label",
-        "armor_size": "Font size",
-        "armor_x": "Horizontal offset",
-        "armor_y": "Vertical offset",
-        "angle_threshold": "Angle threshold",
-    },
-    "uk": {
-        "mod_name": "unicorn.ares Armor Calculator",
-        "main_section": "Відображення",
-        "armor_enable": "Пробиття / броня",
-        "prob_enable": "Шанс пробиття",
-        "angle_enable": "Кут влучання",
-        "eff_enable": "Окреме пробиття",
-        "kill_enable": "Шанс добивання",
-        "gun_enable": "Перекриття гарматою",
-        "position_section": "Головний напис",
-        "armor_size": "Розмір шрифту",
-        "armor_x": "Горизонтальне зміщення",
-        "armor_y": "Вертикальне зміщення",
-        "angle_threshold": "Поріг кута",
-    },
-    "ru": {
-        "mod_name": "unicorn.ares Armor Calculator",
-        "main_section": "Отображение",
-        "armor_enable": "Пробитие / броня",
-        "prob_enable": "Шанс пробития",
-        "angle_enable": "Угол попадания",
-        "eff_enable": "Отдельное пробитие",
-        "kill_enable": "Шанс добивания",
-        "gun_enable": "Перекрытие орудием",
-        "position_section": "Основная надпись",
-        "armor_size": "Размер шрифта",
-        "armor_x": "Горизонтальное смещение",
-        "armor_y": "Вертикальное смещение",
-        "angle_threshold": "Порог угла",
-    },
+    "en": ["unicorn.ares Armor Calculator", "Display", "Penetration / armor", "Penetration chance", "Impact angle", "Separate penetration", "Kill chance", "Gun blocking", "Main label", "Font size", "Horizontal offset", "Vertical offset", "Angle threshold"],
+    "uk": ["unicorn.ares Armor Calculator", "Відображення", "Пробиття / броня", "Шанс пробиття", "Кут влучання", "Окреме пробиття", "Шанс добивання", "Перекриття гарматою", "Головний напис", "Розмір шрифту", "Горизонтальне зміщення", "Вертикальне зміщення", "Поріг кута"],
+    "ru": ["unicorn.ares Armor Calculator", "Отображение", "Пробитие / броня", "Шанс пробития", "Угол попадания", "Отдельное пробитие", "Шанс добивания", "Перекрытие орудием", "Основная надпись", "Размер шрифта", "Горизонтальное смещение", "Вертикальное смещение", "Порог угла"],
 }
 
 
-def _get_language():
-    language = "en"
+def _lang():
     if getClientLanguage is not None:
         try:
-            language = getClientLanguage()
+            value = getClientLanguage()
+            if value in TRANSLATIONS:
+                return value
         except Exception:
             pass
-    return language if language in TRANSLATIONS else "en"
+    return "en"
 
 
-def _t(key):
-    return TRANSLATIONS[_get_language()].get(key, key)
+def _texts():
+    return TRANSLATIONS[_lang()]
 
 
-def _settings_data():
+def _data():
     return {
         "armor_label_enabled": ArmorLabelSettings.ENABLED,
         "pen_label_enabled": PenLabelSettings.ENABLED,
@@ -100,25 +51,26 @@ def _settings_data():
 
 
 def _template():
+    t = _texts()
     return {
-        "modDisplayName": _t("mod_name"),
+        "modDisplayName": t[0],
         "settingsVersion": modDataVersion,
         "enabled": True,
         "column1": [
-            templates.createLabel(_t("main_section")),
-            templates.createCheckbox("armor_label_enabled", _t("armor_enable"), "", ArmorLabelSettings.ENABLED),
-            templates.createCheckbox("pen_label_enabled", _t("prob_enable"), "", PenLabelSettings.ENABLED),
-            templates.createCheckbox("angle_label_enabled", _t("angle_enable"), "", AngleLabelSettings.ENABLED),
-            templates.createCheckbox("eff_pen_label_enabled", _t("eff_enable"), "", EffPenLabelSettings.ENABLED),
-            templates.createCheckbox("kill_label_enabled", _t("kill_enable"), "", KillLabelSettings.ENABLED),
-            templates.createCheckbox("gun_label_enabled", _t("gun_enable"), "", GunLabelSettings.ENABLED),
+            templates.createLabel(t[1]),
+            templates.createCheckbox("armor_label_enabled", t[2], "", ArmorLabelSettings.ENABLED),
+            templates.createCheckbox("pen_label_enabled", t[3], "", PenLabelSettings.ENABLED),
+            templates.createCheckbox("angle_label_enabled", t[4], "", AngleLabelSettings.ENABLED),
+            templates.createCheckbox("eff_pen_label_enabled", t[5], "", EffPenLabelSettings.ENABLED),
+            templates.createCheckbox("kill_label_enabled", t[6], "", KillLabelSettings.ENABLED),
+            templates.createCheckbox("gun_label_enabled", t[7], "", GunLabelSettings.ENABLED),
         ],
         "column2": [
-            templates.createLabel(_t("position_section")),
-            templates.createSlider("armor_label_font_size", _t("armor_size"), "", 10, 30, 1, ArmorLabelSettings.FONT_SIZE),
-            templates.createSlider("armor_label_x_offset", _t("armor_x"), "", -300, 300, 1, ArmorLabelSettings.X_OFFSET),
-            templates.createSlider("armor_label_y_offset", _t("armor_y"), "", -300, 300, 1, ArmorLabelSettings.Y_OFFSET),
-            templates.createSlider("angle_label_display_threshold", _t("angle_threshold"), "", 0, 90, 1, AngleLabelSettings.DISPLAY_THRESHOLD),
+            templates.createLabel(t[8]),
+            templates.createSlider("armor_label_font_size", t[9], "", 10, 30, 1, ArmorLabelSettings.FONT_SIZE),
+            templates.createSlider("armor_label_x_offset", t[10], "", -300, 300, 1, ArmorLabelSettings.X_OFFSET),
+            templates.createSlider("armor_label_y_offset", t[11], "", -300, 300, 1, ArmorLabelSettings.Y_OFFSET),
+            templates.createSlider("angle_label_display_threshold", t[12], "", 0, 90, 1, AngleLabelSettings.DISPLAY_THRESHOLD),
         ],
     }
 
@@ -139,6 +91,6 @@ def _apply(settings):
 
 
 try:
-    g_modsSettingsApi.registerMod(mod_linkage, _template(), _settings_data(), _apply)
-except Exception:
-    pass
+    g_modsSettingsApi.registerMod(mod_linkage, _template(), _data(), _apply)
+except Exception as error:
+    print("unicorn.ares settings registration failed: " + str(error))
