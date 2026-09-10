@@ -22,10 +22,28 @@ function gameUiScale() {
   return 1;
 }
 
+function callModelCommand(name, payload) {
+  try {
+    if (window.model && typeof window.model[name] === 'function') {
+      window.model[name](payload);
+      return;
+    }
+  } catch (e) {}
+  try {
+    if (observer.model && typeof observer.model[name] === 'function') {
+      observer.model[name](payload);
+    }
+  } catch (e) {}
+}
+
 function setRow(el, enabled, text) {
   if (!el) return;
   el.textContent = text || '';
   el.classList.toggle('visible', !!enabled);
+}
+
+function hideRows() {
+  Object.keys(rows).forEach((key) => setRow(rows[key], false, ''));
 }
 
 function resizeSurface(fontSize) {
@@ -42,11 +60,7 @@ function resizeSurface(fontSize) {
   try {
     if (window.viewEnv && viewEnv.resizeViewPx) viewEnv.resizeViewPx(width, height);
   } catch (e) {}
-  try {
-    if (observer.model && typeof observer.model.onResized === 'function') {
-      observer.model.onResized({width: width, height: height, gameScale: scale});
-    }
-  } catch (e) {}
+  callModelCommand('onResized', {width: width, height: height, gameScale: scale});
 }
 
 function render(model) {
@@ -58,6 +72,7 @@ function render(model) {
   }
   if (!root) return;
   if (!data.visible) {
+    hideRows();
     root.classList.add('hidden');
     resizeSurface(16);
     return;
@@ -81,7 +96,5 @@ engine.whenReady.then(() => {
   observer.onUpdate(render);
   observer.subscribe();
   render(observer.model);
-  try {
-    if (observer.model && typeof observer.model.onReady === 'function') observer.model.onReady({});
-  } catch (e) {}
+  callModelCommand('onReady', {});
 });
