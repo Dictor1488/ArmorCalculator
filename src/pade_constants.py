@@ -11,16 +11,16 @@ def safe_get_setting(label, attribute):
 class Colors(object):
     RED = "E90000"
     YELLOW = "FFFF00"
-    ORANGE = "FFFF00"
+    ORANGE = YELLOW
     GREEN = "6BF40D"
     GREY = "808080"
-    PURPLE = "E90000"
+    PURPLE = RED
 
     @classmethod
     def get_color_from_prob(cls, prob):
         if prob <= 7:
             return cls.RED
-        elif prob >= 93:
+        if prob >= 93:
             return cls.GREEN
         return cls.YELLOW
 
