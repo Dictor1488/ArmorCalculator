@@ -14,15 +14,15 @@ from gambiter.flash import COMPONENT_TYPE, COMPONENT_ALIGN  # type: ignore
 
 
 def log(message):
-    print("pademinune's Gui: " + str(message))
+    print("unicorn.ares Armor Calc: " + str(message))
 
 
-ARMOR_ALIAS = "pademinune_ArmorLabel"
-PEN_ALIAS = "pademinune_PenLabel"
-ANGLE_ALIAS = "pademinune_AngleLabel"
-EFF_PEN_ALIAS = "pademinune_EffPenLabel"
-KILL_ALIAS = "pademinune_KillLabel"
-GUN_ALIAS = "pademinune_GunLabel"
+ARMOR_ALIAS = "unicorn_ares_ArmorLabel"
+PEN_ALIAS = "unicorn_ares_PenLabel"
+ANGLE_ALIAS = "unicorn_ares_AngleLabel"
+EFF_PEN_ALIAS = "unicorn_ares_EffPenLabel"
+KILL_ALIAS = "unicorn_ares_KillLabel"
+GUN_ALIAS = "unicorn_ares_GunLabel"
 
 
 class GuiState(object):
@@ -73,13 +73,9 @@ class GuiState(object):
         }
 
         if ricochet:
-            color = Colors.PURPLE
+            color = Colors.RED
             if self.armor_label.settings.ENABLED:
-                self.armor_label.update_gui(
-                    "-",
-                    color,
-                    {"value": "-", "armor": "-", "penetration": avg_pen},
-                )
+                self.armor_label.update_gui(armor_value, color, armor_format_values)
             if self.pen_label.settings.ENABLED:
                 self.pen_label.update_gui(0, color)
             if self.angle_label.settings.ENABLED:
@@ -90,7 +86,20 @@ class GuiState(object):
                 self.kill_label.hide()
         elif not hit_body:
             color = Colors.RED
-            self.hide_all()
+            # If collision processing already produced effective armor, keep the
+            # armor label visible instead of hiding useful data for screens/tracks.
+            if armor_value > 0 and self.armor_label.settings.ENABLED:
+                self.armor_label.update_gui(armor_value, color, armor_format_values)
+                if self.pen_label.visible:
+                    self.pen_label.hide()
+                if self.angle_label.visible:
+                    self.angle_label.hide()
+                if self.eff_pen_label.visible:
+                    self.eff_pen_label.hide()
+                if self.kill_label.visible:
+                    self.kill_label.hide()
+            else:
+                self.hide_all()
         else:
             color = Colors.get_color_from_prob(prob)
             if self.armor_label.settings.ENABLED:
@@ -111,12 +120,12 @@ class GuiState(object):
 
         if self.gun_label.settings.ENABLED:
             if hit_gun:
-                self.gun_label.update_gui("GUN", Colors.ORANGE)
+                self.gun_label.update_gui("GUN", Colors.YELLOW)
             elif self.gun_label.visible:
                 self.gun_label.hide()
 
         if pade_track.TrackState.ENABLED:
-            if hit_track and (color == Colors.GREEN or color == Colors.ORANGE):
+            if hit_track and (color == Colors.GREEN or color == Colors.YELLOW):
                 pade_track.update_track_label(color)
             elif pade_track.TrackState.track_visible:
                 pade_track.hide_track_label()
@@ -199,6 +208,6 @@ def _build_glowfilter():
     }
 
 
-log("Starting creation of armor and penetration gui components")
+log("Creating GUI components")
 gui_state = GuiState()
-log("GUI components have been created!")
+log("GUI components created")
