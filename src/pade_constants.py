@@ -1,13 +1,6 @@
 from pade_config import user_settings, DEFAULT_CONFIG
 
 
-def safe_get_color(color):
-    default = DEFAULT_CONFIG.get("colors", "808080").get(color, "808080")
-    if "colors" not in user_settings or color not in user_settings["colors"]:
-        return default
-    return user_settings["colors"][color]
-
-
 def safe_get_setting(label, attribute):
     default = DEFAULT_CONFIG[label][attribute]
     if label not in user_settings or attribute not in user_settings[label]:
@@ -16,12 +9,12 @@ def safe_get_setting(label, attribute):
 
 
 class Colors(object):
-    RED = safe_get_color("red_chance")
+    RED = "E90000"
     YELLOW = "FFFF00"
-    ORANGE = safe_get_color("orange_chance")
-    GREEN = safe_get_color("green_chance")
+    ORANGE = "FFFF00"
+    GREEN = "6BF40D"
     GREY = "808080"
-    PURPLE = safe_get_color("ricochet")
+    PURPLE = "E90000"
 
     @classmethod
     def get_color_from_prob(cls, prob):
@@ -29,12 +22,12 @@ class Colors(object):
             return cls.RED
         elif prob >= 93:
             return cls.GREEN
-        return cls.ORANGE
+        return cls.YELLOW
 
 
 class ArmorLabelSettings:
     ENABLED = safe_get_setting("armor_label", "enabled")
-    LABEL_FORMAT = safe_get_setting("armor_label", "label_format")
+    LABEL_FORMAT = DEFAULT_CONFIG["armor_label"]["label_format"]
     FONT_SIZE = safe_get_setting("armor_label", "font_size")
     X_OFFSET = safe_get_setting("armor_label", "x_offset")
     Y_OFFSET = safe_get_setting("armor_label", "y_offset")
@@ -42,7 +35,7 @@ class ArmorLabelSettings:
 
 class PenLabelSettings:
     ENABLED = safe_get_setting("pen_label", "enabled")
-    LABEL_FORMAT = safe_get_setting("pen_label", "label_format")
+    LABEL_FORMAT = DEFAULT_CONFIG["pen_label"]["label_format"]
     FONT_SIZE = safe_get_setting("pen_label", "font_size")
     X_OFFSET = safe_get_setting("pen_label", "x_offset")
     Y_OFFSET = safe_get_setting("pen_label", "y_offset")
@@ -50,7 +43,7 @@ class PenLabelSettings:
 
 class AngleLabelSettings:
     ENABLED = safe_get_setting("angle_label", "enabled")
-    LABEL_FORMAT = safe_get_setting("angle_label", "label_format")
+    LABEL_FORMAT = DEFAULT_CONFIG["angle_label"]["label_format"]
     FONT_SIZE = safe_get_setting("angle_label", "font_size")
     X_OFFSET = safe_get_setting("angle_label", "x_offset")
     Y_OFFSET = safe_get_setting("angle_label", "y_offset")
@@ -59,7 +52,7 @@ class AngleLabelSettings:
 
 class EffPenLabelSettings:
     ENABLED = safe_get_setting("eff_pen_label", "enabled")
-    LABEL_FORMAT = safe_get_setting("eff_pen_label", "label_format")
+    LABEL_FORMAT = DEFAULT_CONFIG["eff_pen_label"]["label_format"]
     FONT_SIZE = safe_get_setting("eff_pen_label", "font_size")
     X_OFFSET = safe_get_setting("eff_pen_label", "x_offset")
     Y_OFFSET = safe_get_setting("eff_pen_label", "y_offset")
@@ -67,7 +60,7 @@ class EffPenLabelSettings:
 
 class KillLabelSettings:
     ENABLED = safe_get_setting("kill_label", "enabled")
-    LABEL_FORMAT = safe_get_setting("kill_label", "label_format")
+    LABEL_FORMAT = DEFAULT_CONFIG["kill_label"]["label_format"]
     FONT_SIZE = safe_get_setting("kill_label", "font_size")
     X_OFFSET = safe_get_setting("kill_label", "x_offset")
     Y_OFFSET = safe_get_setting("kill_label", "y_offset")
@@ -75,14 +68,14 @@ class KillLabelSettings:
 
 class GunLabelSettings:
     ENABLED = safe_get_setting("gun_label", "enabled")
-    LABEL_FORMAT = safe_get_setting("gun_label", "label_format")
+    LABEL_FORMAT = DEFAULT_CONFIG["gun_label"]["label_format"]
     FONT_SIZE = safe_get_setting("gun_label", "font_size")
     X_OFFSET = safe_get_setting("gun_label", "x_offset")
     Y_OFFSET = safe_get_setting("gun_label", "y_offset")
 
 
 class ShadowSettings:
-    COLOR = safe_get_setting("shadow", "shadow_color")
-    ALPHA = safe_get_setting("shadow", "shadow_alpha")
-    LENGTH = safe_get_setting("shadow", "shadow_length")
-    STRENGTH = safe_get_setting("shadow", "shadow_strength")
+    COLOR = DEFAULT_CONFIG["shadow"]["shadow_color"]
+    ALPHA = DEFAULT_CONFIG["shadow"]["shadow_alpha"]
+    LENGTH = DEFAULT_CONFIG["shadow"]["shadow_length"]
+    STRENGTH = DEFAULT_CONFIG["shadow"]["shadow_strength"]
