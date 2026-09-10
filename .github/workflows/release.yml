@@ -6,7 +6,7 @@ on:
       version:
         description: "Версія збірки"
         required: true
-        default: "1.7.2"
+        default: "1.8.4"
   push:
     tags:
       - "v*"
@@ -44,10 +44,8 @@ jobs:
           } else {
             $version = "${{ github.ref_name }}"
           }
-
           $version = $version.TrimStart('v')
-          $modName = "armor-calculator-$version"
-
+          $modName = "unicorn.ares-armor-calculator-$version"
           "VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
           "MOD_NAME=$modName" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
           "RELEASE_TAG=v$version" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
@@ -56,60 +54,66 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
-
           Remove-Item build, dist -Recurse -Force -ErrorAction SilentlyContinue
-          New-Item -ItemType Directory -Force -Path "build\res\scripts\client\gui\mods" | Out-Null
-          New-Item -ItemType Directory -Force -Path "dist" | Out-Null
 
-          Copy-Item "src\*.py" "build\res\scripts\client\gui\mods\" -Force
+          $mods = "build\res\scripts\client\gui\mods"
+          $gf = "build\res\gui\gameface\mods\unicorn_ares\ArmorCalculator"
+          $resmap = "build\res\mods\configs\res_map"
+          New-Item -ItemType Directory -Force -Path $mods, $gf, $resmap, "dist" | Out-Null
 
-          if (Test-Path "configs") {
-            New-Item -ItemType Directory -Force -Path "build\mods\configs" | Out-Null
-            Copy-Item "configs\*" "build\mods\configs\" -Recurse -Force
+          $modules = @(
+            "mod_armor_pen_calculator.py",
+            "mod_pade_settings_gui.py",
+            "pade_config.py",
+            "pade_constants.py",
+            "pade_gui.py",
+            "unicorn_ares_gui.py"
+          )
+          foreach ($module in $modules) {
+            Copy-Item (Join-Path "src" $module) $mods -Force
           }
 
-          if (Test-Path "res") {
-            Copy-Item "res\*" "build\res\" -Recurse -Force
-          }
+          Copy-Item "gameface\ArmorCalculatorBattle.html" $gf -Force
+          Copy-Item "gameface\ArmorCalculator.css" $gf -Force
+          Copy-Item "gameface\ArmorCalculator.js" $gf -Force
+          Copy-Item "gameface\armor_calculator_res_map.json" (Join-Path $resmap "armor_calculator_gameface.json") -Force
 
           @"
           <root>
-            <id>armor.calculator</id>
+            <id>unicorn.ares.armor_calculator</id>
             <version>${{ env.VERSION }}</version>
-            <name>Armor Penetration Calculator</name>
-            <description>Armor penetration calculator for World of Tanks.</description>
+            <name>unicorn.ares Armor Calculator</name>
+            <description>GameFace armor penetration calculator for World of Tanks. Requires OpenWG.Gameface.</description>
           </root>
           "@ | Set-Content -Path "build\meta.xml" -Encoding UTF8
 
-      - name: Компілювати всі модулі у Python 2.7 .pyc
+      - name: Компілювати Python 2.7
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
           $mods = "build\res\scripts\client\gui\mods"
-
           & "C:\Python27\python.exe" -m compileall -f $mods
-          if ($LASTEXITCODE -ne 0) {
-            throw "Компіляція Python 2.7 завершилася з помилкою"
-          }
-
+          if ($LASTEXITCODE -ne 0) { throw "Компіляція Python 2.7 завершилася з помилкою" }
           $sourceFiles = Get-ChildItem $mods -Filter "*.py" -Recurse
-          $missingPyc = @()
           foreach ($source in $sourceFiles) {
-            $pyc = "$($source.FullName)c"
-            if (-not (Test-Path $pyc)) {
-              $missingPyc += $source.FullName
+            if (-not (Test-Path "$($source.FullName)c")) {
+              throw "Не створено .pyc: $($source.FullName)"
             }
           }
-
-          if ($missingPyc.Count -gt 0) {
-            $missingPyc | ForEach-Object { Write-Host "Не створено .pyc: $_" }
-            throw "Не всі Python-файли скомпільовані"
-          }
-
           Remove-Item "$mods\*.py" -Force -Recurse
 
-          Write-Host "Скомпільовані файли:"
-          Get-ChildItem $mods -Filter "*.pyc" -Recurse | ForEach-Object { Write-Host $_.FullName }
+      - name: Перевірити GameFace ресурси
+        shell: pwsh
+        run: |
+          $required = @(
+            "build\res\gui\gameface\mods\unicorn_ares\ArmorCalculator\ArmorCalculatorBattle.html",
+            "build\res\gui\gameface\mods\unicorn_ares\ArmorCalculator\ArmorCalculator.css",
+            "build\res\gui\gameface\mods\unicorn_ares\ArmorCalculator\ArmorCalculator.js",
+            "build\res\mods\configs\res_map\armor_calculator_gameface.json"
+          )
+          foreach ($file in $required) {
+            if (-not (Test-Path $file)) { throw "Відсутній GameFace ресурс: $file" }
+          }
 
       - name: Створити .wotmod без стиснення
         shell: pwsh
@@ -118,10 +122,8 @@ jobs:
           @'
           import os
           import zipfile
-
           build_dir = r"build"
           output = os.path.join("dist", os.environ["MOD_NAME"] + ".wotmod")
-
           with zipfile.ZipFile(output, "w", compression=zipfile.ZIP_STORED, allowZip64=True) as archive:
               for root, dirs, files in os.walk(build_dir):
                   dirs.sort()
@@ -130,20 +132,22 @@ jobs:
                       full_path = os.path.join(root, filename)
                       archive_name = os.path.relpath(full_path, build_dir).replace(os.sep, "/")
                       archive.write(full_path, archive_name, compress_type=zipfile.ZIP_STORED)
-
           with zipfile.ZipFile(output, "r") as archive:
-              bad = [item.filename for item in archive.infolist() if item.compress_type != zipfile.ZIP_STORED]
-              py_sources = [item.filename for item in archive.infolist() if item.filename.lower().endswith(".py")]
-              pyc_files = [item.filename for item in archive.infolist() if item.filename.lower().endswith(".pyc")]
-              if bad:
-                  raise RuntimeError("Стиснуті записи у .wotmod: %r" % bad)
-              if py_sources:
-                  raise RuntimeError("У .wotmod залишилися вихідні .py: %r" % py_sources)
-              if not pyc_files:
-                  raise RuntimeError("У .wotmod немає .pyc")
-              print("Python 2.7 .pyc files:", len(pyc_files))
-              for item in archive.infolist():
-                  print(item.filename, "method=", item.compress_type, "size=", item.file_size)
+              names = set(item.filename for item in archive.infolist())
+              required = {
+                  "res/gui/gameface/mods/unicorn_ares/ArmorCalculator/ArmorCalculatorBattle.html",
+                  "res/gui/gameface/mods/unicorn_ares/ArmorCalculator/ArmorCalculator.css",
+                  "res/gui/gameface/mods/unicorn_ares/ArmorCalculator/ArmorCalculator.js",
+                  "res/mods/configs/res_map/armor_calculator_gameface.json",
+              }
+              missing = sorted(required - names)
+              if missing:
+                  raise RuntimeError("Missing GameFace files: %r" % missing)
+              if any(item.compress_type != zipfile.ZIP_STORED for item in archive.infolist()):
+                  raise RuntimeError("У .wotmod є стиснуті записи")
+              if any(name.lower().endswith(".py") for name in names):
+                  raise RuntimeError("У .wotmod залишилися .py")
+          print("Created", output)
           '@ | python -
 
       - name: Створити ZIP для завантаження
@@ -166,12 +170,12 @@ jobs:
         with:
           tag: ${{ env.RELEASE_TAG }}
           commit: ${{ github.sha }}
-          name: Armor Calculator ${{ env.VERSION }}
+          name: unicorn.ares Armor Calculator ${{ env.VERSION }}
           body: |
-            Збірка Armor Penetration Calculator для World of Tanks.
-
+            GameFace-версія Armor Calculator.
+            Потрібен OpenWG.Gameface.
             Python-модулі скомпільовані Python 2.7 у `.pyc`.
-            Пакет `.wotmod` зібраний методом STORE без стиснення.
+            `.wotmod` зібраний методом STORE без стиснення.
           artifacts: "dist/*.wotmod,dist/*.zip"
           artifactErrorsFailBuild: true
           allowUpdates: true
