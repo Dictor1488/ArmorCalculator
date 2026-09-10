@@ -66,7 +66,11 @@ def call_update_gui(
     kill_roll_prob = 0
     if not ricochet and hit_body:
         prob = get_gaussian_probability(avg_pen, armor_val)
-        kill_roll_prob = get_gaussian_probability(alpha_dmg[0], enemy_hp)
+        if isinstance(alpha_dmg, (tuple, list)):
+            alpha_damage = alpha_dmg[0]
+        else:
+            alpha_damage = alpha_dmg
+        kill_roll_prob = get_gaussian_probability(alpha_damage, enemy_hp)
     kill_prob = int(prob * kill_roll_prob // 100)
     prob = int(prob)
 
