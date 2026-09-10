@@ -4,6 +4,7 @@ import logging
 
 import BigWorld
 import GUI
+from PlayerEvents import g_playerEvents  # type: ignore
 from frameworks.wulf import ViewModel, ViewSettings, ViewFlags, WindowFlags, WindowLayer, WindowStatus
 from gui.impl.pub import ViewImpl, WindowImpl
 from skeletons.gui.impl import IGuiLoader
@@ -122,7 +123,7 @@ def _position_window(surface_width=220, surface_height=28, game_scale=1.0):
     x_offset = _safe_int(main.get('x_offset', 0), 0)
     y_offset = _safe_int(main.get('y_offset', 35), 35)
     font_size = max(10, _safe_int(main.get('font_size', 16), 16))
-    first_row_center = 4.0 + font_size * 0.75
+    first_row_center = 4.0 + font_size * 0.575
     try:
         screen_w, screen_h = GUI.screenResolution()
     except Exception:
@@ -130,7 +131,7 @@ def _position_window(surface_width=220, surface_height=28, game_scale=1.0):
 
     scale = max(0.01, _safe_float(game_scale, 1.0))
     target_x = int(round((screen_w - surface_width) / (2.0 * scale) + x_offset / scale))
-    target_y = int(round((screen_h / 2.0 + y_offset - first_row_center) / scale))
+    target_y = int(round(screen_h / (2.0 * scale) + y_offset / scale - first_row_center))
     try:
         _WINDOW.move(target_x, target_y)
     except Exception:
@@ -167,7 +168,7 @@ def ensure_window():
         return False
 
 
-def destroy_window():
+def destroy_window(*args, **kwargs):
     global _WINDOW, _VIEW, _LAST_PAYLOAD, _PENDING_PAYLOAD, _RETRY_CALLBACK
     if _RETRY_CALLBACK is not None:
         try:
@@ -213,14 +214,14 @@ def _push(payload, force=False):
 class GuiState(object):
     def __init__(self):
         self.visible = False
-        self.last_values = None
+        self.last_args = None
 
     def is_visible(self):
         return self.visible
 
     def hide_all(self):
         self.visible = False
-        self.last_values = None
+        self.last_args = None
         _push({'visible': False})
 
     def update_gui(self, armor_value, prob, ricochet, hit_body, hit_track, hit_gun, hit_angle, avg_pen, kill_prob):
@@ -229,6 +230,7 @@ class GuiState(object):
         prob = int(prob)
         hit_angle = int(hit_angle)
         kill_prob = int(kill_prob)
+        self.last_args = (armor_value, prob, bool(ricochet), bool(hit_body), bool(hit_track), bool(hit_gun), hit_angle, avg_pen, kill_prob)
 
         if not hit_body and armor_value <= 0:
             self.hide_all()
@@ -245,31 +247,32 @@ class GuiState(object):
             color = colors.get('medium_chance', 'FFFF00')
 
         angle_cfg = cfg.get('angle_label', {})
+        body_details = bool(hit_body or ricochet)
         payload = {
             'visible': True,
             'armorEnabled': bool(cfg.get('armor_label', {}).get('enabled', True)),
-            'chanceEnabled': bool(cfg.get('pen_label', {}).get('enabled', False)),
-            'angleEnabled': bool(angle_cfg.get('enabled', False) and hit_angle >= _safe_int(angle_cfg.get('display_threshold', 65), 65)),
-            'effPenEnabled': bool(cfg.get('eff_pen_label', {}).get('enabled', False)),
-            'killEnabled': bool(cfg.get('kill_label', {}).get('enabled', False) and kill_prob > 0),
+            'chanceEnabled': bool(cfg.get('pen_label', {}).get('enabled', False) and body_details),
+            'angleEnabled': bool(angle_cfg.get('enabled', False) and body_details and hit_angle >= _safe_int(angle_cfg.get('display_threshold', 65), 65)),
+            'effPenEnabled': bool(cfg.get('eff_pen_label', {}).get('enabled', False) and body_details),
+            'killEnabled': bool(cfg.get('kill_label', {}).get('enabled', False) and hit_body and kill_prob > 0),
             'gunEnabled': bool(cfg.get('gun_label', {}).get('enabled', False) and hit_gun),
             'armorText': '%d/%d' % (avg_pen, armor_value),
             'chanceText': '%d%%' % prob,
-            'angleText': '%d°' % hit_angle,
+            'angleText': u'%d\N{DEGREE SIGN}' % hit_angle,
             'effPenText': '%d' % avg_pen,
-            'killText': '† %d%%' % kill_prob,
+            'killText': u'\N{DAGGER} %d%%' % kill_prob,
             'gunText': 'GUN',
             'color': '#' + color,
             'fontSize': max(10, _safe_int(cfg.get('armor_label', {}).get('font_size', 16), 16))
         }
         self.visible = True
-        self.last_values = payload
         _push(payload)
 
     def update_properties(self):
         _position_window(*_LAST_SURFACE)
-        if self.last_values is not None:
-            _push(self.last_values, force=True)
+        if self.last_args is not None:
+            self.update_gui(*self.last_args)
 
 
 gui_state = GuiState()
+g_playerEvents.onAvatarBecomeNonPlayer += destroy_window
