@@ -7,16 +7,16 @@ except ImportError:
     getClientLanguage = None
 
 from pade_constants import ArmorLabelSettings, PenLabelSettings, AngleLabelSettings, EffPenLabelSettings, KillLabelSettings, GunLabelSettings
-from pade_config import save_flat_config
+from pade_config import save_flat_config, get_config
 from pade_gui import gui_state
 
 mod_linkage = "unicorn_ares_armor_calculator"
-modDataVersion = 4
+modDataVersion = 5
 
 TRANSLATIONS = {
-    "en": ["unicorn.ares Armor Calculator", "Display", "Penetration / armor", "Penetration chance", "Impact angle", "Separate penetration", "Kill chance", "Gun blocking", "Main label", "Font size", "Horizontal offset", "Vertical offset", "Angle threshold"],
-    "uk": ["unicorn.ares Armor Calculator", "Відображення", "Пробиття / броня", "Шанс пробиття", "Кут влучання", "Окреме пробиття", "Шанс добивання", "Перекриття гарматою", "Головний напис", "Розмір шрифту", "Горизонтальне зміщення", "Вертикальне зміщення", "Поріг кута"],
-    "ru": ["unicorn.ares Armor Calculator", "Отображение", "Пробитие / броня", "Шанс пробития", "Угол попадания", "Отдельное пробитие", "Шанс добивания", "Перекрытие орудием", "Основная надпись", "Размер шрифта", "Горизонтальное смещение", "Вертикальное смещение", "Порог угла"],
+    "en": ["unicorn.ares Armor Calculator", "Display", "Penetration / armor", "Penetration chance", "Impact angle", "Separate penetration", "Kill chance", "Gun blocking", "Position", "Font size", "Horizontal offset", "Vertical offset", "Angle threshold", "Colorblind mode"],
+    "uk": ["unicorn.ares Armor Calculator", "Відображення", "Пробиття / броня", "Шанс пробиття", "Кут влучання", "Окреме пробиття", "Шанс добивання", "Перекриття гарматою", "Позиція", "Розмір шрифту", "Горизонтальне зміщення", "Вертикальне зміщення", "Поріг кута", "Колірна сліпота"],
+    "ru": ["unicorn.ares Armor Calculator", "Отображение", "Пробитие / броня", "Шанс пробития", "Угол попадания", "Отдельное пробитие", "Шанс добивания", "Перекрытие орудием", "Позиция", "Размер шрифта", "Горизонтальное смещение", "Вертикальное смещение", "Порог угла", "Цветовая слепота"],
 }
 
 
@@ -36,6 +36,7 @@ def _texts():
 
 
 def _data():
+    cfg = get_config()
     return {
         "armor_label_enabled": ArmorLabelSettings.ENABLED,
         "pen_label_enabled": PenLabelSettings.ENABLED,
@@ -47,11 +48,13 @@ def _data():
         "armor_label_x_offset": ArmorLabelSettings.X_OFFSET,
         "armor_label_y_offset": ArmorLabelSettings.Y_OFFSET,
         "angle_label_display_threshold": AngleLabelSettings.DISPLAY_THRESHOLD,
+        "colorblind": bool(cfg.get("colorblind", False)),
     }
 
 
 def _template():
     t = _texts()
+    cfg = get_config()
     return {
         "modDisplayName": t[0],
         "settingsVersion": modDataVersion,
@@ -64,6 +67,7 @@ def _template():
             templates.createCheckbox("eff_pen_label_enabled", t[5], "", EffPenLabelSettings.ENABLED),
             templates.createCheckbox("kill_label_enabled", t[6], "", KillLabelSettings.ENABLED),
             templates.createCheckbox("gun_label_enabled", t[7], "", GunLabelSettings.ENABLED),
+            templates.createCheckbox("colorblind", t[13], "", bool(cfg.get("colorblind", False))),
         ],
         "column2": [
             templates.createLabel(t[8]),
