@@ -8,7 +8,6 @@ from pade_constants import (
     GunLabelSettings,
     ShadowSettings,
 )
-import pade_track
 from gambiter import g_guiFlash  # type: ignore
 from gambiter.flash import COMPONENT_TYPE, COMPONENT_ALIGN  # type: ignore
 
@@ -42,8 +41,6 @@ class GuiState(object):
         for label in self.labels:
             if label.visible:
                 label.hide()
-        if pade_track.TrackState.ENABLED and pade_track.TrackState.track_visible:
-            pade_track.hide_track_label()
 
     def update_gui(self, armor_value, prob, ricochet, hit_body, hit_track, hit_gun, hit_angle, avg_pen, kill_prob):
         armor_value = int(armor_value)
@@ -92,12 +89,6 @@ class GuiState(object):
                 self.gun_label.update_gui("GUN", Colors.YELLOW)
             elif self.gun_label.visible:
                 self.gun_label.hide()
-
-        if pade_track.TrackState.ENABLED:
-            if hit_track and color in (Colors.GREEN, Colors.YELLOW):
-                pade_track.update_track_label(color)
-            elif pade_track.TrackState.track_visible:
-                pade_track.hide_track_label()
 
     def update_properties(self):
         for label in self.labels:
