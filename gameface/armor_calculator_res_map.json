@@ -1,0 +1,12 @@
+[
+  {
+    "itemID": "mods/unicorn_ares/ArmorCalculatorBattle/layoutID",
+    "type": "Layout",
+    "path": "coui://gui/gameface/mods/unicorn_ares/ArmorCalculator/ArmorCalculatorBattle.html",
+    "parameters": {
+      "extension": "",
+      "entrance": "ArmorCalculatorBattle",
+      "impl": "gameface"
+    }
+  }
+]
