@@ -47,7 +47,7 @@ def hide_track_label():
 
 
 green_track_properties = {
-    "image": "img://gui/unicorn.ares/crosshair-32-green.png",
+    "image": "img://gui/pademinune/crosshair-32-green.png",
     "alpha": 1,
     "x": 0,
     "y": 0,
@@ -57,7 +57,7 @@ green_track_properties = {
 }
 
 yellow_track_properties = {
-    "image": "img://gui/unicorn.ares/crosshair-32-orange.png",
+    "image": "img://gui/pademinune/crosshair-32-orange.png",
     "alpha": 1,
     "x": 0,
     "y": 0,
