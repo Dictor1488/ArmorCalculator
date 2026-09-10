@@ -1,0 +1,181 @@
+name: Збірка та реліз мода
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Версія збірки"
+        required: true
+        default: "1.7.2"
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Завантажити репозиторій
+        uses: actions/checkout@v4
+
+      - name: Встановити Python 2.7
+        shell: pwsh
+        run: |
+          choco install python2 -y --no-progress
+          if (-not (Test-Path "C:\Python27\python.exe")) {
+            throw "Python 2.7 не знайдено у C:\Python27\python.exe"
+          }
+          & "C:\Python27\python.exe" --version
+
+      - name: Встановити Python 3 для пакування
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Визначити версію
+        shell: pwsh
+        run: |
+          if ("${{ github.event_name }}" -eq "workflow_dispatch") {
+            $version = "${{ inputs.version }}"
+          } else {
+            $version = "${{ github.ref_name }}"
+          }
+
+          $version = $version.TrimStart('v')
+          $modName = "armor-calculator-$version"
+
+          "VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "MOD_NAME=$modName" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "RELEASE_TAG=v$version" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Підготувати структуру мода
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+
+          Remove-Item build, dist -Recurse -Force -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Force -Path "build\res\scripts\client\gui\mods" | Out-Null
+          New-Item -ItemType Directory -Force -Path "dist" | Out-Null
+
+          Copy-Item "src\*.py" "build\res\scripts\client\gui\mods\" -Force
+
+          if (Test-Path "configs") {
+            New-Item -ItemType Directory -Force -Path "build\mods\configs" | Out-Null
+            Copy-Item "configs\*" "build\mods\configs\" -Recurse -Force
+          }
+
+          if (Test-Path "res") {
+            Copy-Item "res\*" "build\res\" -Recurse -Force
+          }
+
+          @"
+          <root>
+            <id>armor.calculator</id>
+            <version>${{ env.VERSION }}</version>
+            <name>Armor Penetration Calculator</name>
+            <description>Armor penetration calculator for World of Tanks.</description>
+          </root>
+          "@ | Set-Content -Path "build\meta.xml" -Encoding UTF8
+
+      - name: Компілювати всі модулі у Python 2.7 .pyc
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $mods = "build\res\scripts\client\gui\mods"
+
+          & "C:\Python27\python.exe" -m compileall -f $mods
+          if ($LASTEXITCODE -ne 0) {
+            throw "Компіляція Python 2.7 завершилася з помилкою"
+          }
+
+          $sourceFiles = Get-ChildItem $mods -Filter "*.py" -Recurse
+          $missingPyc = @()
+          foreach ($source in $sourceFiles) {
+            $pyc = "$($source.FullName)c"
+            if (-not (Test-Path $pyc)) {
+              $missingPyc += $source.FullName
+            }
+          }
+
+          if ($missingPyc.Count -gt 0) {
+            $missingPyc | ForEach-Object { Write-Host "Не створено .pyc: $_" }
+            throw "Не всі Python-файли скомпільовані"
+          }
+
+          Remove-Item "$mods\*.py" -Force -Recurse
+
+          Write-Host "Скомпільовані файли:"
+          Get-ChildItem $mods -Filter "*.pyc" -Recurse | ForEach-Object { Write-Host $_.FullName }
+
+      - name: Створити .wotmod без стиснення
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          @'
+          import os
+          import zipfile
+
+          build_dir = r"build"
+          output = os.path.join("dist", os.environ["MOD_NAME"] + ".wotmod")
+
+          with zipfile.ZipFile(output, "w", compression=zipfile.ZIP_STORED, allowZip64=True) as archive:
+              for root, dirs, files in os.walk(build_dir):
+                  dirs.sort()
+                  files.sort()
+                  for filename in files:
+                      full_path = os.path.join(root, filename)
+                      archive_name = os.path.relpath(full_path, build_dir).replace(os.sep, "/")
+                      archive.write(full_path, archive_name, compress_type=zipfile.ZIP_STORED)
+
+          with zipfile.ZipFile(output, "r") as archive:
+              bad = [item.filename for item in archive.infolist() if item.compress_type != zipfile.ZIP_STORED]
+              py_sources = [item.filename for item in archive.infolist() if item.filename.lower().endswith(".py")]
+              pyc_files = [item.filename for item in archive.infolist() if item.filename.lower().endswith(".pyc")]
+              if bad:
+                  raise RuntimeError("Стиснуті записи у .wotmod: %r" % bad)
+              if py_sources:
+                  raise RuntimeError("У .wotmod залишилися вихідні .py: %r" % py_sources)
+              if not pyc_files:
+                  raise RuntimeError("У .wotmod немає .pyc")
+              print("Python 2.7 .pyc files:", len(pyc_files))
+              for item in archive.infolist():
+                  print(item.filename, "method=", item.compress_type, "size=", item.file_size)
+          '@ | python -
+
+      - name: Створити ZIP для завантаження
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "dist\${{ env.MOD_NAME }}.wotmod" -DestinationPath "dist\${{ env.MOD_NAME }}.zip" -Force
+
+      - name: Завантажити артефакт Actions
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.MOD_NAME }}
+          path: |
+            dist/*.wotmod
+            dist/*.zip
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Створити або оновити GitHub Release
+        uses: ncipollo/release-action@v1.14.0
+        with:
+          tag: ${{ env.RELEASE_TAG }}
+          commit: ${{ github.sha }}
+          name: Armor Calculator ${{ env.VERSION }}
+          body: |
+            Збірка Armor Penetration Calculator для World of Tanks.
+
+            Python-модулі скомпільовані Python 2.7 у `.pyc`.
+            Пакет `.wotmod` зібраний методом STORE без стиснення.
+          artifacts: "dist/*.wotmod,dist/*.zip"
+          artifactErrorsFailBuild: true
+          allowUpdates: true
+          removeArtifacts: true
+          replacesArtifacts: true
+          makeLatest: true
+          token: ${{ secrets.GITHUB_TOKEN }}
