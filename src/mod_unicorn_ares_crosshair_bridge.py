@@ -16,17 +16,11 @@ _SESSION = dependency.instance(IBattleSessionProvider)
 _RESOLVER = gun_marker_ctrl.createShotResultResolver()
 _SUBSCRIBED = False
 _RETRY = None
+_FIRST_UPDATE_LOGGED = False
 
 
 def _log(message):
     print('unicorn.ares crosshair bridge: ' + str(message))
-
-
-def _safe_health(entity):
-    try:
-        return int(getattr(entity, 'health', 0))
-    except Exception:
-        return 0
 
 
 def _get_jet_loss(shell):
@@ -67,9 +61,9 @@ def _compute_effective_armor(hit_point, direction, collision, shell):
     for item in details:
         try:
             if not _RESOLVER._CrosshairShotResults__isDestructibleComponent(entity, item.compName):
-                break
+                continue
         except Exception:
-            break
+            continue
 
         if not hit_track and (item.compName == 0 or item.compName >= 4):
             hit_track = True
@@ -89,13 +83,8 @@ def _compute_effective_armor(hit_point, direction, collision, shell):
         if jet_start is not None and jet_loss_by_dist > 0.0:
             air_dist = item.dist - jet_start
             if air_dist > 0.0:
-                # Express HEAT air loss as equivalent armor so the displayed
-                # effective value follows the same penetration budget.
                 try:
-                    player = BigWorld.player()
-                    v_desc = player.getVehicleDescriptor() if player is not None else None
-                    base_pp = v_desc.shot.piercingPower[0] if v_desc is not None else 0.0
-                    total_armor += max(0.0, base_pp * air_dist * jet_loss_by_dist)
+                    total_armor += max(0.0, air_dist * jet_loss_by_dist)
                 except Exception:
                     pass
 
@@ -130,13 +119,33 @@ def _compute_effective_armor(hit_point, direction, collision, shell):
     return (float(total_armor), ricochet, hit_body, hit_track, hit_gun, hit_angle_cos)
 
 
-def _compute_and_show(hit_point, direction, collision):
-    if collision is None:
+def _get_shot(player, gun_marker_state):
+    v_desc = player.getVehicleDescriptor()
+    try:
+        slot = v_desc.gunInstallations[gun_marker_state.gunInstallationIndex]
+        if slot.isMainInstallation():
+            return v_desc.shot
+        return slot.gun.shots[0]
+    except Exception:
+        return v_desc.shot
+
+
+def _compute_and_show(gun_marker_state):
+    global _FIRST_UPDATE_LOGGED
+
+    if gun_marker_state is None:
         gui_state.hide_all()
         return
 
-    entity = collision.entity
-    if not isinstance(entity, (VehicleEntity, DestructibleEntity)):
+    collision = getattr(gun_marker_state, 'collData', None)
+    hit_point = getattr(gun_marker_state, 'position', None)
+    direction = getattr(gun_marker_state, 'direction', None)
+    if collision is None or hit_point is None or direction is None:
+        gui_state.hide_all()
+        return
+
+    entity = getattr(collision, 'entity', None)
+    if entity is None or not isinstance(entity, (VehicleEntity, DestructibleEntity)):
         gui_state.hide_all()
         return
 
@@ -146,11 +155,12 @@ def _compute_and_show(hit_point, direction, collision):
         return
 
     try:
-        v_desc = player.getVehicleDescriptor()
-        shot = v_desc.shot
+        shot = _get_shot(player, gun_marker_state)
         shell = shot.shell
-        distance = (hit_point - player.getOwnVehiclePosition()).length
-        current_pen = _RESOLVER._computePiercingPowerAtDist(shot.piercingPower, distance, shot.maxDistance, 1)
+        distance = player.position.flatDistTo(hit_point)
+        current_pen = gun_marker_ctrl.computePiercingPowerAtDist(
+            shot.piercingPower, distance, shot.maxDistance, 1
+        )
         if isinstance(current_pen, (tuple, list)):
             current_pen = current_pen[0]
         current_pen = float(current_pen)
@@ -159,15 +169,15 @@ def _compute_and_show(hit_point, direction, collision):
         gui_state.hide_all()
         return
 
-    armor, ricochet, hit_body, hit_track, hit_gun, angle_cos = _compute_effective_armor(hit_point, direction, collision, shell)
+    armor, ricochet, hit_body, hit_track, hit_gun, angle_cos = _compute_effective_armor(
+        hit_point, direction, collision, shell
+    )
 
     angle_cos = max(-1.0, min(1.0, float(angle_cos)))
     hit_angle = int(math.degrees(math.acos(angle_cos)))
 
-    # The GUI calculates chance itself from penetration/armor. Pass the
-    # current penetration value as avg_pen so distance is reflected.
     prob = 0
-    if not ricochet and hit_body:
+    if not ricochet and hit_body and current_pen > 0.0:
         min_pen = current_pen * 0.75
         max_pen = current_pen * 1.25
         if armor <= min_pen:
@@ -192,9 +202,15 @@ def _compute_and_show(hit_point, direction, collision):
         0,
     )
 
+    if not _FIRST_UPDATE_LOGGED:
+        _FIRST_UPDATE_LOGGED = True
+        _log('first marker update: armor=%.1f pen=%.1f body=%s ricochet=%s' % (
+            armor, current_pen, hit_body, ricochet
+        ))
 
-def _on_marker_changed(marker_type, hit_point, direction, collision):
-    _compute_and_show(hit_point, direction, collision)
+
+def _on_marker_changed(marker_type, gun_marker_state, support_markers_info):
+    _compute_and_show(gun_marker_state)
 
 
 def _subscribe():
@@ -243,4 +259,4 @@ def _on_avatar_non_player(*args, **kwargs):
 
 g_playerEvents.onAvatarBecomePlayer += _on_avatar_player
 g_playerEvents.onAvatarBecomeNonPlayer += _on_avatar_non_player
-_log('loaded')
+_log('loaded v1.8.8')
