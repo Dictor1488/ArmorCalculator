@@ -28,6 +28,7 @@ _LAST_PAYLOAD = None
 _PENDING_PAYLOAD = None
 _RETRY_CALLBACK = None
 _LAST_SURFACE = (220, 28, 1.0)
+_FIRST_VISIBLE_PUSH_LOGGED = False
 
 
 def _safe_float(value, default=1.0):
@@ -72,6 +73,9 @@ class ArmorModel(ViewModel):
         _LAST_SURFACE = (width, height, game_scale)
         print('unicorn.ares GameFace: resized %dx%d scale=%.3f' % (width, height, game_scale))
         _position_window(width, height, game_scale)
+
+    def getPayload(self):
+        return self._getString(0)
 
     def setPayload(self, value):
         self._setString(0, value)
@@ -172,7 +176,7 @@ def ensure_window():
 
 
 def destroy_window(*args, **kwargs):
-    global _WINDOW, _VIEW, _LAST_PAYLOAD, _PENDING_PAYLOAD, _RETRY_CALLBACK
+    global _WINDOW, _VIEW, _LAST_PAYLOAD, _PENDING_PAYLOAD, _RETRY_CALLBACK, _FIRST_VISIBLE_PUSH_LOGGED
     if _RETRY_CALLBACK is not None:
         try:
             BigWorld.cancelCallback(_RETRY_CALLBACK)
@@ -188,6 +192,7 @@ def destroy_window(*args, **kwargs):
     _VIEW = None
     _LAST_PAYLOAD = None
     _PENDING_PAYLOAD = None
+    _FIRST_VISIBLE_PUSH_LOGGED = False
 
 
 def _flush_pending():
@@ -196,7 +201,7 @@ def _flush_pending():
 
 
 def _push(payload, force=False):
-    global _LAST_PAYLOAD, _PENDING_PAYLOAD
+    global _LAST_PAYLOAD, _PENDING_PAYLOAD, _FIRST_VISIBLE_PUSH_LOGGED
     _PENDING_PAYLOAD = payload
     if not ensure_window() or _VIEW is None:
         return
@@ -210,6 +215,9 @@ def _push(payload, force=False):
         with _VIEW.viewModel.transaction() as model:
             model.setPayload(raw)
         _LAST_PAYLOAD = raw
+        if payload.get('visible') is True and not _FIRST_VISIBLE_PUSH_LOGGED:
+            _FIRST_VISIBLE_PUSH_LOGGED = True
+            print('unicorn.ares GameFace: first visible payload pushed: ' + raw)
     except Exception:
         LOG.exception('Failed to push GameFace state')
 
