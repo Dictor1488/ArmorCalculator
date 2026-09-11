@@ -1,16 +1,10 @@
 (function () {
   'use strict';
 
-  var root = document.getElementById('armor-root');
-  var rows = {
-    armor: document.getElementById('armor-line'),
-    chance: document.getElementById('chance-line'),
-    angle: document.getElementById('angle-line'),
-    effpen: document.getElementById('effpen-line'),
-    kill: document.getElementById('kill-line'),
-    gun: document.getElementById('gun-line')
-  };
-
+  var NS = 'http://www.w3.org/2000/svg';
+  var WIDTH = 220;
+  var MIN_HEIGHT = 24;
+  var svg = document.getElementById('armor-svg');
   var lastPayload = null;
   var lastSize = null;
   var pollTimer = null;
@@ -38,28 +32,49 @@
     } catch (e) {}
   }
 
-  function setRow(element, enabled, text) {
-    if (!element) return;
-    element.textContent = text || '';
-    if (enabled) element.classList.add('visible');
-    else element.classList.remove('visible');
+  function clearSvg() {
+    if (!svg) return;
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
   }
 
-  function hideRows() {
-    for (var key in rows) {
-      if (rows.hasOwnProperty(key)) setRow(rows[key], false, '');
+  function el(name, attrs, parent) {
+    var node = document.createElementNS(NS, name);
+    if (attrs) {
+      for (var key in attrs) {
+        if (attrs.hasOwnProperty(key)) node.setAttribute(key, attrs[key]);
+      }
     }
+    (parent || svg).appendChild(node);
+    return node;
   }
 
-  function resizeSurface(fontSize) {
-    var visibleRows = root ? root.querySelectorAll('.row.visible').length : 0;
-    var logicalWidth = 220;
-    var lineHeight = Math.max(18, Math.ceil(fontSize * 1.15));
-    var logicalHeight = Math.max(24, visibleRows * lineHeight + 4);
+  function addDefs() {
+    var defs = el('defs');
+    var filter = el('filter', { id: 'armorShadow', x: '-40%', y: '-80%', width: '180%', height: '260%' }, defs);
+    el('feDropShadow', {
+      dx: '0',
+      dy: '0',
+      stdDeviation: '1.6',
+      'flood-color': '#000000',
+      'flood-opacity': '1'
+    }, filter);
+  }
+
+  function resizeSurface(logicalHeight) {
+    logicalHeight = Math.max(MIN_HEIGHT, Math.ceil(logicalHeight));
     var scale = gameUiScale();
-    var width = Math.ceil(logicalWidth * scale);
+    var width = Math.ceil(WIDTH * scale);
     var height = Math.ceil(logicalHeight * scale);
     var key = width + 'x' + height + '@' + scale.toFixed(4);
+
+    if (svg) {
+      svg.setAttribute('width', WIDTH);
+      svg.setAttribute('height', logicalHeight);
+      svg.setAttribute('viewBox', '0 0 ' + WIDTH + ' ' + logicalHeight);
+      svg.style.height = logicalHeight + 'px';
+    }
+    document.documentElement.style.height = logicalHeight + 'px';
+    document.body.style.height = logicalHeight + 'px';
 
     if (key === lastSize) return;
     lastSize = key;
@@ -77,29 +92,55 @@
     });
   }
 
+  function drawText(text, y, fontSize, color) {
+    var t = el('text', {
+      x: WIDTH / 2,
+      y: y,
+      fill: color || '#ffffff',
+      'font-size': fontSize,
+      'font-family': 'Arial, sans-serif',
+      'font-weight': '700',
+      'text-anchor': 'middle',
+      filter: 'url(#armorShadow)'
+    });
+    t.textContent = String(text || '');
+  }
+
   function render(data) {
-    if (!root) return;
+    if (!svg) return;
+    clearSvg();
 
     if (!data || data.visible !== true) {
-      hideRows();
-      root.classList.add('hidden');
-      resizeSurface(16);
+      resizeSurface(MIN_HEIGHT);
       return;
     }
 
+    addDefs();
+
     var fontSize = Math.max(10, num(data.fontSize, 16));
-    root.classList.remove('hidden');
-    root.style.fontSize = fontSize + 'px';
-    root.style.color = data.color || '#ffffff';
+    var lineHeight = Math.max(18, Math.ceil(fontSize * 1.2));
+    var lines = [];
 
-    setRow(rows.armor, data.armorEnabled === true, data.armorText);
-    setRow(rows.chance, data.chanceEnabled === true, data.chanceText);
-    setRow(rows.angle, data.angleEnabled === true, data.angleText);
-    setRow(rows.effpen, data.effPenEnabled === true, data.effPenText);
-    setRow(rows.kill, data.killEnabled === true, data.killText);
-    setRow(rows.gun, data.gunEnabled === true, data.gunText);
+    if (data.armorEnabled === true) lines.push(data.armorText);
+    if (data.chanceEnabled === true) lines.push(data.chanceText);
+    if (data.angleEnabled === true) lines.push(data.angleText);
+    if (data.effPenEnabled === true) lines.push(data.effPenText);
+    if (data.killEnabled === true) lines.push(data.killText);
+    if (data.gunEnabled === true) lines.push(data.gunText);
 
-    resizeSurface(fontSize);
+    if (!lines.length) {
+      resizeSurface(MIN_HEIGHT);
+      return;
+    }
+
+    var logicalHeight = Math.max(MIN_HEIGHT, lines.length * lineHeight + 4);
+    resizeSurface(logicalHeight);
+
+    var baselineOffset = fontSize * 0.82;
+    for (var i = 0; i < lines.length; i++) {
+      var top = 2 + i * lineHeight;
+      drawText(lines[i], top + baselineOffset, fontSize, data.color || '#ffffff');
+    }
   }
 
   function readPayload() {
@@ -134,7 +175,7 @@
   }
 
   function initialize() {
-    resizeSurface(16);
+    resizeSurface(MIN_HEIGHT);
     callModelCommand('onReady', {});
     tick();
 
@@ -151,7 +192,7 @@
       try { window.engine.on('clientResized', refreshGeometry); } catch (e) {}
     }
 
-    if (!pollTimer) pollTimer = window.setInterval(tick, 1000);
+    if (!pollTimer) pollTimer = window.setInterval(tick, 250);
   }
 
   if (window.engine && window.engine.whenReady) {
