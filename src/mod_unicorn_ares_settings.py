@@ -35,23 +35,6 @@ def _texts():
     return TRANSLATIONS[_lang()]
 
 
-def _data():
-    cfg = get_config()
-    return {
-        "armor_label_enabled": ArmorLabelSettings.ENABLED,
-        "pen_label_enabled": PenLabelSettings.ENABLED,
-        "angle_label_enabled": AngleLabelSettings.ENABLED,
-        "eff_pen_label_enabled": EffPenLabelSettings.ENABLED,
-        "kill_label_enabled": KillLabelSettings.ENABLED,
-        "gun_label_enabled": GunLabelSettings.ENABLED,
-        "armor_label_font_size": ArmorLabelSettings.FONT_SIZE,
-        "armor_label_x_offset": ArmorLabelSettings.X_OFFSET,
-        "armor_label_y_offset": ArmorLabelSettings.Y_OFFSET,
-        "angle_label_display_threshold": AngleLabelSettings.DISPLAY_THRESHOLD,
-        "colorblind": bool(cfg.get("colorblind", False)),
-    }
-
-
 def _template():
     t = _texts()
     cfg = get_config()
@@ -94,7 +77,13 @@ def _apply(settings):
     gui_state.update_properties()
 
 
+def _on_settings_save(linkage, settings):
+    if linkage != mod_linkage:
+        return
+    _apply(settings)
+
+
 try:
-    g_modsSettingsApi.registerMod(mod_linkage, _template(), _data(), _apply)
+    g_modsSettingsApi.setModTemplate(mod_linkage, _template(), _on_settings_save, None)
 except Exception as error:
     print("unicorn.ares settings registration failed: " + str(error))
