@@ -106,14 +106,15 @@ def _compute_default_armor(hit_point, direction, entity, shell, full_pen):
     for item in details:
         try:
             if not _RESOLVER._CrosshairShotResults__isDestructibleComponent(entity, item.compName):
-                # Match the native resolver: once the trace leaves a destructible
-                # component, collisions after it are not part of this armor path.
                 break
         except Exception:
             break
 
         hit_track, hit_gun = _collision_flags(item, hit_track, hit_gun)
 
+        # This is NOT shell flight-distance loss. For HEAT it applies only after
+        # the cumulative jet has already passed through an external armor layer
+        # (screen/track/etc.) and travels through the air gap to the next layer.
         if is_jet and jet_start is not None and jet_loss_by_dist > 0.0:
             try:
                 jet_dist = float(item.dist) - float(jet_start)
@@ -122,8 +123,6 @@ def _compute_default_armor(hit_point, direction, entity, shell, full_pen):
             if jet_dist > 0.0 and piercing_power > 0.0:
                 loss_by_dist = max(0.0, 1.0 - jet_dist * jet_loss_by_dist)
                 lost_penetration = piercing_power * (1.0 - loss_by_dist)
-                # Express HEAT air loss as equivalent consumed penetration, in mm.
-                # The previous bridge incorrectly added only distance*factor to armor.
                 total_armor += max(0.0, lost_penetration)
                 piercing_power *= loss_by_dist
 
@@ -284,6 +283,32 @@ def _distance_to_hit(player, hit_point):
             return 0.0
 
 
+def _base_penetration(pp_desc):
+    try:
+        if isinstance(pp_desc, (tuple, list)):
+            return float(pp_desc[0])
+        return float(pp_desc)
+    except Exception:
+        return 0.0
+
+
+def _current_penetration(shot, shell, distance):
+    # HEAT / HOLLOW_CHARGE penetration is constant over target distance.
+    # Spaced-armor jet loss is handled separately inside _compute_default_armor().
+    try:
+        if shell.kind == constants.SHELL_TYPES.HOLLOW_CHARGE:
+            return _base_penetration(shot.piercingPower)
+    except Exception:
+        pass
+
+    value = gun_marker_ctrl.computePiercingPowerAtDist(
+        shot.piercingPower, distance, shot.maxDistance, 1
+    )
+    if isinstance(value, (tuple, list)):
+        value = value[0]
+    return float(value)
+
+
 def _compute_and_show(gun_marker_state):
     if gun_marker_state is None:
         gui_state.hide_all()
@@ -317,12 +342,7 @@ def _compute_and_show(gun_marker_state):
         shot = _get_shot(player, gun_marker_state)
         shell = shot.shell
         distance = _distance_to_hit(player, hit_point)
-        current_pen = gun_marker_ctrl.computePiercingPowerAtDist(
-            shot.piercingPower, distance, shot.maxDistance, 1
-        )
-        if isinstance(current_pen, (tuple, list)):
-            current_pen = current_pen[0]
-        current_pen = float(current_pen)
+        current_pen = _current_penetration(shot, shell, distance)
     except Exception:
         gui_state.hide_all()
         return
