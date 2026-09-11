@@ -6,6 +6,8 @@ import BigWorld
 import GUI
 from PlayerEvents import g_playerEvents  # type: ignore
 from frameworks.wulf import ViewModel, ViewSettings, ViewFlags, WindowFlags, WindowLayer, WindowStatus
+from gui.app_loader import g_appLoader
+from gui.app_loader.settings import GUI_GLOBAL_SPACE_ID
 from gui.impl.pub import ViewImpl, WindowImpl
 from skeletons.gui.impl import IGuiLoader
 from helpers import dependency
@@ -44,8 +46,10 @@ def _safe_int(value, default=0):
         return default
 
 
-def _is_battle_avatar():
+def _is_battle_ready():
     try:
+        if g_appLoader.getSpaceID() != GUI_GLOBAL_SPACE_ID.BATTLE:
+            return False
         player = BigWorld.player()
         return player is not None and getattr(player, 'arena', None) is not None
     except Exception:
@@ -169,7 +173,10 @@ def ensure_window():
     global _WINDOW, _VIEW
     if _WINDOW is not None:
         return True
-    if not _OPENWG_OK or not _is_battle_avatar():
+    if not _OPENWG_OK:
+        return False
+    if not _is_battle_ready():
+        _schedule_retry()
         return False
 
     main_window = _get_main_window()
@@ -187,6 +194,7 @@ def ensure_window():
         LOG.exception('Failed to load GameFace ArmorCalculator')
         _WINDOW = None
         _VIEW = None
+        _schedule_retry()
         return False
 
 
