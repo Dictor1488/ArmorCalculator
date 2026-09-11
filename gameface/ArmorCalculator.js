@@ -78,7 +78,6 @@
     text.setAttribute('paint-order', 'stroke');
     text.textContent = String(data.armorText || '');
     svg.appendChild(text);
-    callModelCommand('onRendered', { text: String(data.armorText || '') });
   }
 
   function readPayload() {
