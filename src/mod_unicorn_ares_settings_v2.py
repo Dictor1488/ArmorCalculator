@@ -15,9 +15,9 @@ mod_linkage = "unicorn_ares_armor_calculator"
 modDataVersion = 6
 
 TRANSLATIONS = {
-    "en": ["unicorn.ares Armor Calculator", "Display", "Penetration / armor", "Penetration chance", "Impact angle", "Separate penetration", "Kill chance", "Gun blocking", "Position", "Font size", "Horizontal offset", "Vertical offset", "Angle threshold", "Colorblind mode"],
-    "uk": ["unicorn.ares Armor Calculator", "Відображення", "Пробиття / броня", "Шанс пробиття", "Кут влучання", "Окреме пробиття", "Шанс добивання", "Перекриття гарматою", "Позиція", "Розмір шрифту", "Горизонтальне зміщення", "Вертикальне зміщення", "Поріг кута", "Колірна сліпота"],
-    "ru": ["unicorn.ares Armor Calculator", "Отображение", "Пробитие / броня", "Шанс пробития", "Угол попадания", "Отдельное пробитие", "Шанс добивания", "Перекрытие орудием", "Позиция", "Размер шрифта", "Горизонтальное смещение", "Вертикальное смещение", "Порог угла", "Цветовая слепота"],
+    "en": ["unicorn.ares Armor Calculator", "Display", "Penetration / armor", "Penetration chance", "Impact angle", "Separate penetration", "Kill chance", "Gun blocking", "Position and size", "Text size", "Horizontal position", "Vertical position", "Show impact angle from", "Colorblind mode"],
+    "uk": ["unicorn.ares Armor Calculator", "Що показувати", "Пробиття / броня", "Шанс пробиття", "Кут влучання", "Пробиття окремим рядком", "Шанс знищення", "Влучання в гармату", "Позиція та розмір", "Розмір тексту", "Положення по горизонталі", "Положення по вертикалі", "Показувати кут від", "Режим дальтонізму"],
+    "ru": ["unicorn.ares Armor Calculator", "Что показывать", "Пробитие / броня", "Шанс пробития", "Угол попадания", "Пробитие отдельной строкой", "Шанс уничтожения", "Попадание в орудие", "Позиция и размер", "Размер текста", "Положение по горизонтали", "Положение по вертикали", "Показывать угол от", "Режим дальтонизма"],
 }
 
 
@@ -45,20 +45,20 @@ def _template():
         "enabled": True,
         "column1": [
             templates.createLabel(t[1]),
-            templates.createCheckbox("armor_label_enabled", t[2], "", ArmorLabelSettings.ENABLED),
-            templates.createCheckbox("pen_label_enabled", t[3], "", PenLabelSettings.ENABLED),
-            templates.createCheckbox("angle_label_enabled", t[4], "", AngleLabelSettings.ENABLED),
-            templates.createCheckbox("eff_pen_label_enabled", t[5], "", EffPenLabelSettings.ENABLED),
-            templates.createCheckbox("kill_label_enabled", t[6], "", KillLabelSettings.ENABLED),
-            templates.createCheckbox("gun_label_enabled", t[7], "", GunLabelSettings.ENABLED),
-            templates.createCheckbox("colorblind", t[13], "", bool(cfg.get("colorblind", False))),
+            templates.createCheckbox("armor_label_enabled", t[2], "Основний рядок: пробиття снаряда / приведена броня.", ArmorLabelSettings.ENABLED),
+            templates.createCheckbox("pen_label_enabled", t[3], "Показувати розрахований шанс пробиття у відсотках.", PenLabelSettings.ENABLED),
+            templates.createCheckbox("angle_label_enabled", t[4], "Показувати кут, під яким снаряд влучає в броню.", AngleLabelSettings.ENABLED),
+            templates.createCheckbox("eff_pen_label_enabled", t[5], "Показувати пробиття снаряда окремим рядком.", EffPenLabelSettings.ENABLED),
+            templates.createCheckbox("kill_label_enabled", t[6], "Показувати шанс знищення цілі, якщо він доступний.", KillLabelSettings.ENABLED),
+            templates.createCheckbox("gun_label_enabled", t[7], "Позначати випадки, коли траєкторія проходить через гармату.", GunLabelSettings.ENABLED),
+            templates.createCheckbox("colorblind", t[13], "Замінює червоний колір на фіолетовий.", bool(cfg.get("colorblind", False))),
         ],
         "column2": [
             templates.createLabel(t[8]),
-            templates.createSlider("armor_label_font_size", t[9], "", 10, 30, 1, ArmorLabelSettings.FONT_SIZE),
-            templates.createSlider("armor_label_x_offset", t[10], "", -300, 300, 1, ArmorLabelSettings.X_OFFSET),
-            templates.createSlider("armor_label_y_offset", t[11], "", -300, 300, 1, ArmorLabelSettings.Y_OFFSET),
-            templates.createSlider("angle_label_display_threshold", t[12], "", 0, 90, 1, AngleLabelSettings.DISPLAY_THRESHOLD),
+            templates.createSlider("armor_label_font_size", t[9], "Розмір основного тексту.", 10, 30, 1, ArmorLabelSettings.FONT_SIZE),
+            templates.createSlider("armor_label_x_offset", t[10], "Зміщення індикатора ліворуч або праворуч від центру екрана.", -300, 300, 1, ArmorLabelSettings.X_OFFSET),
+            templates.createSlider("armor_label_y_offset", t[11], "Зміщення індикатора вгору або вниз від центру екрана.", -300, 300, 1, ArmorLabelSettings.Y_OFFSET),
+            templates.createSlider("angle_label_display_threshold", t[12], "Кут буде показаний лише починаючи з цього значення, у градусах.", 0, 90, 1, AngleLabelSettings.DISPLAY_THRESHOLD),
         ],
     }
 
