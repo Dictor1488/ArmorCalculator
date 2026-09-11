@@ -12,7 +12,7 @@ on:
       - "v*"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -117,3 +117,16 @@ jobs:
             dist/*.zip
           if-no-files-found: error
           retention-days: 30
+
+      - name: Опублікувати збірку в GitHub Releases
+        uses: ncipollo/release-action@v1
+        with:
+          tag: v${{ env.VERSION }}
+          name: unicorn.ares Armor Calculator ${{ env.VERSION }}
+          artifacts: "dist/*.wotmod,dist/*.zip"
+          artifactErrorsFailBuild: true
+          allowUpdates: true
+          replacesArtifacts: true
+          makeLatest: true
+          generateReleaseNotes: true
+          token: ${{ secrets.GITHUB_TOKEN }}
