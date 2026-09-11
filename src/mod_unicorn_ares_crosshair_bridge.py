@@ -73,6 +73,36 @@ def _is_modern_he(shell):
         return False
 
 
+def _is_friendly_vehicle(player, entity):
+    if not isinstance(entity, VehicleEntity):
+        return False
+
+    try:
+        player_team = getattr(player, 'team', None)
+        entity_team = getattr(getattr(entity, 'publicInfo', None), 'team', None)
+        if player_team is not None and entity_team is not None:
+            return int(player_team) == int(entity_team)
+    except Exception:
+        pass
+
+    try:
+        arena = getattr(player, 'arena', None)
+        vehicles = getattr(arena, 'vehicles', None)
+        info = vehicles.get(entity.id) if vehicles is not None else None
+        if info is not None:
+            if isinstance(info, dict):
+                entity_team = info.get('team')
+            else:
+                entity_team = getattr(info, 'team', None)
+            player_team = getattr(player, 'team', None)
+            if player_team is not None and entity_team is not None:
+                return int(player_team) == int(entity_team)
+    except Exception:
+        pass
+
+    return False
+
+
 def _collision_flags(item, hit_track, hit_gun):
     if not hit_track and (item.compName == 0 or item.compName >= 4):
         hit_track = True
@@ -112,9 +142,6 @@ def _compute_default_armor(hit_point, direction, entity, shell, full_pen):
 
         hit_track, hit_gun = _collision_flags(item, hit_track, hit_gun)
 
-        # This is NOT shell flight-distance loss. For HEAT it applies only after
-        # the cumulative jet has already passed through an external armor layer
-        # (screen/track/etc.) and travels through the air gap to the next layer.
         if is_jet and jet_start is not None and jet_loss_by_dist > 0.0:
             try:
                 jet_dist = float(item.dist) - float(jet_start)
@@ -293,8 +320,6 @@ def _base_penetration(pp_desc):
 
 
 def _current_penetration(shot, shell, distance):
-    # HEAT / HOLLOW_CHARGE penetration is constant over target distance.
-    # Spaced-armor jet loss is handled separately inside _compute_default_armor().
     try:
         if shell.kind == constants.SHELL_TYPES.HOLLOW_CHARGE:
             return _base_penetration(shot.piercingPower)
@@ -335,6 +360,10 @@ def _compute_and_show(gun_marker_state):
 
     player = BigWorld.player()
     if player is None:
+        gui_state.hide_all()
+        return
+
+    if _is_friendly_vehicle(player, entity):
         gui_state.hide_all()
         return
 
@@ -430,8 +459,5 @@ def _on_avatar_non_player(*args, **kwargs):
     gui_state.hide_all()
 
 
-# Subscribe only after the avatar is fully ready. This mirrors the current
-# battle lifecycle used by other stable GameFace mods and avoids early retries
-# while the battle controllers are still being rebuilt.
 g_playerEvents.onAvatarReady += _on_avatar_ready
 g_playerEvents.onAvatarBecomeNonPlayer += _on_avatar_non_player
