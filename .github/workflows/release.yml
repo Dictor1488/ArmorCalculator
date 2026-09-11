@@ -6,8 +6,10 @@ on:
       version:
         description: "Версія збірки"
         required: true
-        default: "1.9.8"
+        default: "1.9.9"
   push:
+    branches:
+      - main
     tags:
       - "v*"
 
@@ -16,6 +18,7 @@ permissions:
 
 jobs:
   build:
+    if: github.event_name != 'push' || startsWith(github.ref, 'refs/tags/') || github.event.head_commit.message == 'ci: build 1.9.9'
     runs-on: windows-latest
 
     steps:
@@ -38,7 +41,8 @@ jobs:
         shell: pwsh
         run: |
           if ("${{ github.event_name }}" -eq "workflow_dispatch") { $version = "${{ inputs.version }}" }
-          else { $version = "${{ github.ref_name }}" }
+          elseif ("${{ github.ref }}" -like "refs/tags/*") { $version = "${{ github.ref_name }}" }
+          else { $version = "1.9.9" }
           $version = $version.TrimStart('v')
           "VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
           "MOD_NAME=unicorn.ares-armor-calculator-$version" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
