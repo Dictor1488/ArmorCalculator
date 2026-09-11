@@ -2,13 +2,15 @@
   'use strict';
 
   var WIDTH = 220;
-  var HEIGHT = 24;
+  var MIN_HEIGHT = 24;
   var NS = 'http://www.w3.org/2000/svg';
   var root = document.getElementById('armor-root');
   var holder = document.getElementById('armor-holder');
   var svg = document.getElementById('armor-hud');
   var lastPayload = null;
+  var lastData = null;
   var lastSize = null;
+  var logicalHeight = MIN_HEIGHT;
   var pollTimer = null;
 
   function num(value, fallback) {
@@ -34,19 +36,45 @@
     } catch (e) {}
   }
 
-  function resizeWindow() {
+  function applyLogicalSize(height) {
+    logicalHeight = Math.max(MIN_HEIGHT, Math.ceil(height || MIN_HEIGHT));
+    try {
+      document.documentElement.style.width = WIDTH + 'px';
+      document.documentElement.style.height = logicalHeight + 'px';
+      document.body.style.width = WIDTH + 'px';
+      document.body.style.height = logicalHeight + 'px';
+    } catch (e) {}
+    if (root) {
+      root.style.width = WIDTH + 'px';
+      root.style.height = logicalHeight + 'px';
+    }
+    if (holder) {
+      holder.style.width = WIDTH + 'px';
+      holder.style.height = logicalHeight + 'px';
+    }
+    if (svg) {
+      svg.setAttribute('width', WIDTH);
+      svg.setAttribute('height', logicalHeight);
+      svg.setAttribute('viewBox', '0 0 ' + WIDTH + ' ' + logicalHeight);
+      svg.style.width = WIDTH + 'px';
+      svg.style.height = logicalHeight + 'px';
+    }
+  }
+
+  function resizeWindow(height) {
+    applyLogicalSize(height);
     var scale = gameUiScale();
     var width = Math.ceil(WIDTH * scale);
-    var height = Math.ceil(HEIGHT * scale);
-    var key = width + 'x' + height + '@' + scale.toFixed(4);
+    var physicalHeight = Math.ceil(logicalHeight * scale);
+    var key = width + 'x' + physicalHeight + '@' + scale.toFixed(4);
     if (key === lastSize) return;
     lastSize = key;
     try {
       if (window.viewEnv && typeof viewEnv.resizeViewPx === 'function') {
-        viewEnv.resizeViewPx(width, height);
+        viewEnv.resizeViewPx(width, physicalHeight);
       }
     } catch (e) {}
-    callModelCommand('onResized', { width: width, height: height, gameScale: scale });
+    callModelCommand('onResized', { width: width, height: physicalHeight, gameScale: scale });
   }
 
   function clearSvg() {
@@ -54,21 +82,23 @@
     while (svg.firstChild) svg.removeChild(svg.firstChild);
   }
 
-  function draw(data) {
-    if (!root || !svg) return;
-    clearSvg();
+  function enabledRows(data) {
+    var rows = [];
+    if (!data) return rows;
+    if (data.armorEnabled === true) rows.push(String(data.armorText || ''));
+    if (data.chanceEnabled === true) rows.push(String(data.chanceText || ''));
+    if (data.angleEnabled === true) rows.push(String(data.angleText || ''));
+    if (data.effPenEnabled === true) rows.push(String(data.effPenText || ''));
+    if (data.killEnabled === true) rows.push(String(data.killText || ''));
+    if (data.gunEnabled === true) rows.push(String(data.gunText || ''));
+    return rows;
+  }
 
-    if (!data || data.visible !== true || data.armorEnabled !== true) {
-      root.className = 'hidden';
-      return;
-    }
-
-    root.className = '';
-    var fontSize = Math.max(10, num(data.fontSize, 16));
+  function appendText(value, y, fontSize, color) {
     var text = document.createElementNS(NS, 'text');
     text.setAttribute('x', WIDTH / 2);
-    text.setAttribute('y', 2 + fontSize * 0.82);
-    text.setAttribute('fill', data.color || '#ffffff');
+    text.setAttribute('y', y);
+    text.setAttribute('fill', color || '#ffffff');
     text.setAttribute('font-size', fontSize);
     text.setAttribute('font-family', 'Arial, sans-serif');
     text.setAttribute('font-weight', '700');
@@ -76,8 +106,32 @@
     text.setAttribute('stroke', '#000000');
     text.setAttribute('stroke-width', '2');
     text.setAttribute('paint-order', 'stroke');
-    text.textContent = String(data.armorText || '');
+    text.textContent = value;
     svg.appendChild(text);
+  }
+
+  function draw(data) {
+    if (!root || !svg) return;
+    clearSvg();
+
+    var rows = enabledRows(data);
+    if (!data || data.visible !== true || rows.length === 0) {
+      root.className = 'hidden';
+      resizeWindow(MIN_HEIGHT);
+      return;
+    }
+
+    var fontSize = Math.max(10, num(data.fontSize, 16));
+    var rowHeight = Math.ceil(fontSize + 4);
+    var height = Math.max(MIN_HEIGHT, 4 + rows.length * rowHeight);
+    resizeWindow(height);
+    root.className = '';
+
+    var baseline = 2 + fontSize * 0.82;
+    var color = data.color || '#ffffff';
+    for (var i = 0; i < rows.length; i++) {
+      appendText(rows[i], baseline + i * rowHeight, fontSize, color);
+    }
   }
 
   function readPayload() {
@@ -96,6 +150,7 @@
     } catch (e) {
       data = {};
     }
+    lastData = data;
     draw(data);
     return true;
   }
@@ -106,12 +161,12 @@
 
   function refreshGeometry() {
     lastSize = null;
-    resizeWindow();
-    tick();
+    if (lastData) draw(lastData);
+    else resizeWindow(MIN_HEIGHT);
   }
 
   function initialize() {
-    resizeWindow();
+    resizeWindow(MIN_HEIGHT);
     tick();
     callModelCommand('onReady', {});
 
