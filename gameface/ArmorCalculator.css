@@ -10,32 +10,13 @@ html, body {
   user-select: none;
 }
 * {
-  box-sizing: border-box;
   pointer-events: none;
   user-select: none;
 }
-#armor-root {
-  position: relative;
+#armor-svg {
   display: block;
   width: 220px;
-  min-height: 24px;
-  padding: 2px 4px;
-  text-align: center;
-  white-space: nowrap;
-  color: #ffffff;
-  font-family: Arial, sans-serif;
-  font-weight: 700;
-  line-height: 1.15;
-  text-shadow: 0 0 3px #000000, 0 0 3px #000000;
-}
-#armor-root.hidden {
-  visibility: hidden;
-}
-.row {
-  display: none;
-  width: 100%;
-  min-height: 18px;
-}
-.row.visible {
-  display: block;
+  height: 24px;
+  overflow: visible;
+  pointer-events: none;
 }
