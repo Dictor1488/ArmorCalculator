@@ -1,4 +1,4 @@
-name: Збірка та реліз мода
+name: Збірка мода
 
 on:
   workflow_dispatch:
@@ -12,10 +12,10 @@ on:
       - "v*"
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  build-and-release:
+  build:
     runs-on: windows-latest
 
     steps:
@@ -48,7 +48,6 @@ jobs:
           $modName = "unicorn.ares-armor-calculator-$version"
           "VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
           "MOD_NAME=$modName" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-          "RELEASE_TAG=v$version" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
       - name: Підготувати структуру мода
         shell: pwsh
@@ -163,22 +162,3 @@ jobs:
             dist/*.zip
           if-no-files-found: error
           retention-days: 30
-
-      - name: Створити або оновити GitHub Release
-        uses: ncipollo/release-action@v1.14.0
-        with:
-          tag: ${{ env.RELEASE_TAG }}
-          commit: ${{ github.sha }}
-          name: unicorn.ares Armor Calculator ${{ env.VERSION }}
-          body: |
-            GameFace-версія Armor Calculator.
-            Потрібен OpenWG.Gameface.
-            Python-модулі скомпільовані Python 2.7 у `.pyc`.
-            `.wotmod` зібраний методом STORE без стиснення.
-          artifacts: "dist/*.wotmod,dist/*.zip"
-          artifactErrorsFailBuild: true
-          allowUpdates: true
-          removeArtifacts: true
-          replacesArtifacts: true
-          makeLatest: true
-          token: ${{ secrets.GITHUB_TOKEN }}
