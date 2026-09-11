@@ -6,9 +6,8 @@ import BigWorld
 import GUI
 from PlayerEvents import g_playerEvents  # type: ignore
 from frameworks.wulf import ViewModel, ViewSettings, ViewFlags, WindowFlags, WindowLayer, WindowStatus
-from gui.app_loader import g_appLoader
-from gui.app_loader.settings import GUI_GLOBAL_SPACE_ID
 from gui.impl.pub import ViewImpl, WindowImpl
+from skeletons.gui.app_loader import IAppLoader, GuiGlobalSpaceID
 from skeletons.gui.impl import IGuiLoader
 from helpers import dependency
 
@@ -48,7 +47,8 @@ def _safe_int(value, default=0):
 
 def _is_battle_ready():
     try:
-        if g_appLoader.getSpaceID() != GUI_GLOBAL_SPACE_ID.BATTLE:
+        app_loader = dependency.instance(IAppLoader)
+        if app_loader is None or app_loader.getSpaceID() != GuiGlobalSpaceID.BATTLE:
             return False
         player = BigWorld.player()
         return player is not None and getattr(player, 'arena', None) is not None
@@ -109,13 +109,7 @@ class ArmorView(ViewImpl):
 
 class ArmorWindow(WindowImpl):
     def __init__(self, parent=None):
-        WindowImpl.__init__(
-            self,
-            WindowFlags.WINDOW,
-            content=ArmorView(),
-            layer=WindowLayer.VIEW,
-            name='unicorn.ares ArmorCalculator'
-        )
+        WindowImpl.__init__(self, WindowFlags.WINDOW, content=ArmorView(), layer=WindowLayer.VIEW, name='unicorn.ares ArmorCalculator')
 
     def _onReady(self):
         try:
@@ -146,7 +140,6 @@ def _position_window(surface_width=220, surface_height=28, game_scale=1.0):
         screen_w, screen_h = GUI.screenResolution()
     except Exception:
         screen_w, screen_h = 1920, 1080
-
     scale = max(0.01, _safe_float(game_scale, 1.0))
     target_x = int(round((screen_w - surface_width) / (2.0 * scale) + x_offset / scale))
     target_y = int(round(screen_h / (2.0 * scale) + y_offset / scale - first_row_center))
@@ -178,13 +171,10 @@ def ensure_window():
     if not _is_battle_ready():
         _schedule_retry()
         return False
-
     main_window = _get_main_window()
-    if (main_window is None or getattr(main_window, 'proxy', None) is None or
-            getattr(main_window, 'windowStatus', None) != WindowStatus.LOADED):
+    if main_window is None or getattr(main_window, 'proxy', None) is None or getattr(main_window, 'windowStatus', None) != WindowStatus.LOADED:
         _schedule_retry()
         return False
-
     try:
         _WINDOW = ArmorWindow()
         _WINDOW.load()
@@ -233,12 +223,10 @@ def _push(payload, force=False):
         return
     if not force and raw == _LAST_PAYLOAD:
         return
-
     view_model = _VIEW.viewModel
     if view_model is None:
         _schedule_retry()
         return
-
     try:
         with view_model.transaction() as model:
             model.setPayload(raw)
@@ -267,11 +255,9 @@ class GuiState(object):
         hit_angle = int(hit_angle)
         kill_prob = int(kill_prob)
         self.last_args = (armor_value, prob, bool(ricochet), bool(hit_body), bool(hit_track), bool(hit_gun), hit_angle, avg_pen, kill_prob)
-
         if not hit_body and armor_value <= 0:
             self.hide_all()
             return
-
         cfg = get_config()
         colorblind = bool(cfg.get('colorblind', False))
         colors = cfg.get('colors', {})
@@ -281,7 +267,6 @@ class GuiState(object):
             color = colors.get('green_chance', '6BF40D')
         else:
             color = colors.get('medium_chance', 'FFFF00')
-
         angle_cfg = cfg.get('angle_label', {})
         body_details = bool(hit_body or ricochet)
         payload = {
