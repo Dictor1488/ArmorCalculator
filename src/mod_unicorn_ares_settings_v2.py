@@ -10,14 +10,92 @@ from unicorn_ares_constants import ArmorLabelSettings, PenLabelSettings, AngleLa
 from unicorn_ares_config import save_flat_config, get_config
 from unicorn_ares_gui import gui_state
 
-MOD_VERSION = "1.8.5"
+MOD_VERSION = "1.9.6"
 mod_linkage = "unicorn_ares_armor_calculator"
-modDataVersion = 6
+modDataVersion = 7
 
 TRANSLATIONS = {
-    "en": ["unicorn.ares Armor Calculator", "Display", "Penetration / armor", "Penetration chance", "Impact angle", "Separate penetration", "Kill chance", "Gun blocking", "Position and size", "Text size", "Horizontal position", "Vertical position", "Show impact angle from", "Colorblind mode"],
-    "uk": ["unicorn.ares Armor Calculator", "Що показувати", "Пробиття / броня", "Шанс пробиття", "Кут влучання", "Пробиття окремим рядком", "Шанс знищення", "Влучання в гармату", "Позиція та розмір", "Розмір тексту", "Положення по горизонталі", "Положення по вертикалі", "Показувати кут від", "Режим дальтонізму"],
-    "ru": ["unicorn.ares Armor Calculator", "Что показывать", "Пробитие / броня", "Шанс пробития", "Угол попадания", "Пробитие отдельной строкой", "Шанс уничтожения", "Попадание в орудие", "Позиция и размер", "Размер текста", "Положение по горизонтали", "Положение по вертикали", "Показывать угол от", "Режим дальтонизма"],
+    "en": {
+        "title": "unicorn.ares Armor Calculator",
+        "display": "Display",
+        "armor": "Penetration / armor",
+        "armor_tip": "Main line: shell penetration / effective armor.",
+        "chance": "Penetration chance",
+        "chance_tip": "Show calculated penetration chance as a percentage.",
+        "angle": "Impact angle",
+        "angle_tip": "Show the angle at which the shell hits the armor.",
+        "separate_pen": "Penetration on separate line",
+        "separate_pen_tip": "Show shell penetration on a separate line.",
+        "kill": "Kill chance",
+        "kill_tip": "Show kill chance when it is available.",
+        "gun": "Gun hit",
+        "gun_tip": "Mark cases where the trajectory goes through the gun.",
+        "colorblind": "Colorblind mode",
+        "colorblind_tip": "Replaces red with purple.",
+        "position": "Position and size",
+        "size": "Text size",
+        "size_tip": "Size of the main text.",
+        "x": "Horizontal position",
+        "x_tip": "Move the indicator left or right from screen center.",
+        "y": "Vertical position",
+        "y_tip": "Move the indicator up or down from screen center.",
+        "angle_from": "Show impact angle from",
+        "angle_from_tip": "The angle is shown only from this value, in degrees."
+    },
+    "uk": {
+        "title": "unicorn.ares Armor Calculator",
+        "display": "Що показувати",
+        "armor": "Пробиття / броня",
+        "armor_tip": "Основний рядок: пробиття снаряда / приведена броня.",
+        "chance": "Шанс пробиття",
+        "chance_tip": "Показувати розрахований шанс пробиття у відсотках.",
+        "angle": "Кут влучання",
+        "angle_tip": "Показувати кут, під яким снаряд влучає в броню.",
+        "separate_pen": "Пробиття окремим рядком",
+        "separate_pen_tip": "Показувати пробиття снаряда окремим рядком.",
+        "kill": "Шанс знищення",
+        "kill_tip": "Показувати шанс знищення цілі, якщо він доступний.",
+        "gun": "Влучання в гармату",
+        "gun_tip": "Позначати випадки, коли траєкторія проходить через гармату.",
+        "colorblind": "Режим дальтонізму",
+        "colorblind_tip": "Замінює червоний колір на фіолетовий.",
+        "position": "Позиція та розмір",
+        "size": "Розмір тексту",
+        "size_tip": "Розмір основного тексту.",
+        "x": "Положення по горизонталі",
+        "x_tip": "Зміщення індикатора ліворуч або праворуч від центру екрана.",
+        "y": "Положення по вертикалі",
+        "y_tip": "Зміщення індикатора вгору або вниз від центру екрана.",
+        "angle_from": "Показувати кут від",
+        "angle_from_tip": "Кут буде показаний лише починаючи з цього значення, у градусах."
+    },
+    "ru": {
+        "title": "unicorn.ares Armor Calculator",
+        "display": "Что показывать",
+        "armor": "Пробитие / броня",
+        "armor_tip": "Основная строка: пробитие снаряда / приведённая броня.",
+        "chance": "Шанс пробития",
+        "chance_tip": "Показывать рассчитанный шанс пробития в процентах.",
+        "angle": "Угол попадания",
+        "angle_tip": "Показывать угол, под которым снаряд попадает в броню.",
+        "separate_pen": "Пробитие отдельной строкой",
+        "separate_pen_tip": "Показывать пробитие снаряда отдельной строкой.",
+        "kill": "Шанс уничтожения",
+        "kill_tip": "Показывать шанс уничтожения цели, если он доступен.",
+        "gun": "Попадание в орудие",
+        "gun_tip": "Отмечать случаи, когда траектория проходит через орудие.",
+        "colorblind": "Режим дальтонизма",
+        "colorblind_tip": "Заменяет красный цвет на фиолетовый.",
+        "position": "Позиция и размер",
+        "size": "Размер текста",
+        "size_tip": "Размер основного текста.",
+        "x": "Положение по горизонтали",
+        "x_tip": "Смещение индикатора влево или вправо от центра экрана.",
+        "y": "Положение по вертикали",
+        "y_tip": "Смещение индикатора вверх или вниз от центра экрана.",
+        "angle_from": "Показывать угол от",
+        "angle_from_tip": "Угол будет показан только начиная с этого значения, в градусах."
+    }
 }
 
 
@@ -40,25 +118,25 @@ def _template():
     t = _texts()
     cfg = get_config()
     return {
-        "modDisplayName": t[0],
+        "modDisplayName": t["title"],
         "settingsVersion": modDataVersion,
         "enabled": True,
         "column1": [
-            templates.createLabel(t[1]),
-            templates.createCheckbox("armor_label_enabled", t[2], "Основний рядок: пробиття снаряда / приведена броня.", ArmorLabelSettings.ENABLED),
-            templates.createCheckbox("pen_label_enabled", t[3], "Показувати розрахований шанс пробиття у відсотках.", PenLabelSettings.ENABLED),
-            templates.createCheckbox("angle_label_enabled", t[4], "Показувати кут, під яким снаряд влучає в броню.", AngleLabelSettings.ENABLED),
-            templates.createCheckbox("eff_pen_label_enabled", t[5], "Показувати пробиття снаряда окремим рядком.", EffPenLabelSettings.ENABLED),
-            templates.createCheckbox("kill_label_enabled", t[6], "Показувати шанс знищення цілі, якщо він доступний.", KillLabelSettings.ENABLED),
-            templates.createCheckbox("gun_label_enabled", t[7], "Позначати випадки, коли траєкторія проходить через гармату.", GunLabelSettings.ENABLED),
-            templates.createCheckbox("colorblind", t[13], "Замінює червоний колір на фіолетовий.", bool(cfg.get("colorblind", False))),
+            templates.createLabel(t["display"]),
+            templates.createCheckbox(t["armor"], "armor_label_enabled", ArmorLabelSettings.ENABLED, tooltip=t["armor_tip"]),
+            templates.createCheckbox(t["chance"], "pen_label_enabled", PenLabelSettings.ENABLED, tooltip=t["chance_tip"]),
+            templates.createCheckbox(t["angle"], "angle_label_enabled", AngleLabelSettings.ENABLED, tooltip=t["angle_tip"]),
+            templates.createCheckbox(t["separate_pen"], "eff_pen_label_enabled", EffPenLabelSettings.ENABLED, tooltip=t["separate_pen_tip"]),
+            templates.createCheckbox(t["kill"], "kill_label_enabled", KillLabelSettings.ENABLED, tooltip=t["kill_tip"]),
+            templates.createCheckbox(t["gun"], "gun_label_enabled", GunLabelSettings.ENABLED, tooltip=t["gun_tip"]),
+            templates.createCheckbox(t["colorblind"], "colorblind", bool(cfg.get("colorblind", False)), tooltip=t["colorblind_tip"]),
         ],
         "column2": [
-            templates.createLabel(t[8]),
-            templates.createSlider("armor_label_font_size", t[9], "Розмір основного тексту.", 10, 30, 1, ArmorLabelSettings.FONT_SIZE),
-            templates.createSlider("armor_label_x_offset", t[10], "Зміщення індикатора ліворуч або праворуч від центру екрана.", -300, 300, 1, ArmorLabelSettings.X_OFFSET),
-            templates.createSlider("armor_label_y_offset", t[11], "Зміщення індикатора вгору або вниз від центру екрана.", -300, 300, 1, ArmorLabelSettings.Y_OFFSET),
-            templates.createSlider("angle_label_display_threshold", t[12], "Кут буде показаний лише починаючи з цього значення, у градусах.", 0, 90, 1, AngleLabelSettings.DISPLAY_THRESHOLD),
+            templates.createLabel(t["position"]),
+            templates.createSlider(t["size"], "armor_label_font_size", ArmorLabelSettings.FONT_SIZE, 10, 30, 1, tooltip=t["size_tip"]),
+            templates.createSlider(t["x"], "armor_label_x_offset", ArmorLabelSettings.X_OFFSET, -300, 300, 1, tooltip=t["x_tip"]),
+            templates.createSlider(t["y"], "armor_label_y_offset", ArmorLabelSettings.Y_OFFSET, -300, 300, 1, tooltip=t["y_tip"]),
+            templates.createSlider(t["angle_from"], "angle_label_display_threshold", AngleLabelSettings.DISPLAY_THRESHOLD, 0, 90, 1, tooltip=t["angle_from_tip"]),
         ],
     }
 
@@ -86,6 +164,5 @@ def _on_settings_save(linkage, settings):
 
 try:
     g_modsSettingsApi.setModTemplate(mod_linkage, _template(), _on_settings_save, None)
-    print("unicorn.ares settings v%s registered via setModTemplate" % MOD_VERSION)
 except Exception as error:
-    print("unicorn.ares settings v%s registration failed: %s" % (MOD_VERSION, error))
+    print("unicorn.ares settings registration failed: %s" % error)
