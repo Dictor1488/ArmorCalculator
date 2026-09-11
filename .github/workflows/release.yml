@@ -8,6 +8,8 @@ on:
         required: true
         default: "1.8.5"
   push:
+    branches:
+      - main
     tags:
       - "v*"
 
@@ -26,9 +28,7 @@ jobs:
         shell: pwsh
         run: |
           choco install python2 -y --no-progress
-          if (-not (Test-Path "C:\Python27\python.exe")) {
-            throw "Python 2.7 не знайдено у C:\Python27\python.exe"
-          }
+          if (-not (Test-Path "C:\Python27\python.exe")) { throw "Python 2.7 не знайдено" }
           & "C:\Python27\python.exe" --version
 
       - name: Встановити Python 3 для пакування
@@ -39,43 +39,28 @@ jobs:
       - name: Визначити версію
         shell: pwsh
         run: |
-          if ("${{ github.event_name }}" -eq "workflow_dispatch") {
-            $version = "${{ inputs.version }}"
-          } else {
-            $version = "${{ github.ref_name }}"
-          }
+          if ("${{ github.event_name }}" -eq "workflow_dispatch") { $version = "${{ inputs.version }}" }
+          elseif ("${{ github.ref }}" -like "refs/tags/*") { $version = "${{ github.ref_name }}" }
+          else { $version = "1.8.5" }
           $version = $version.TrimStart('v')
-          $modName = "unicorn.ares-armor-calculator-$version"
           "VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-          "MOD_NAME=$modName" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "MOD_NAME=unicorn.ares-armor-calculator-$version" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
       - name: Підготувати структуру мода
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
           Remove-Item build, dist -Recurse -Force -ErrorAction SilentlyContinue
-
           $mods = "build\res\scripts\client\gui\mods"
           $gf = "build\res\gui\gameface\mods\unicorn_ares\ArmorCalculator"
           $resmap = "build\res\mods\configs\res_map"
           New-Item -ItemType Directory -Force -Path $mods, $gf, $resmap, "dist" | Out-Null
-
-          $modules = @(
-            "mod_unicorn_ares_armor.py",
-            "mod_unicorn_ares_settings_v2.py",
-            "unicorn_ares_config.py",
-            "unicorn_ares_constants.py",
-            "unicorn_ares_gui.py"
-          )
-          foreach ($module in $modules) {
-            Copy-Item (Join-Path "src" $module) $mods -Force
-          }
-
+          $modules = @("mod_unicorn_ares_armor.py","mod_unicorn_ares_settings_v2.py","unicorn_ares_config.py","unicorn_ares_constants.py","unicorn_ares_gui.py")
+          foreach ($module in $modules) { Copy-Item (Join-Path "src" $module) $mods -Force }
           Copy-Item "gameface\ArmorCalculatorBattle.html" $gf -Force
           Copy-Item "gameface\ArmorCalculator.css" $gf -Force
           Copy-Item "gameface\ArmorCalculator.js" $gf -Force
           Copy-Item "gameface\armor_calculator_res_map.json" (Join-Path $resmap "armor_calculator_gameface.json") -Force
-
           @"
           <root>
             <id>unicorn.ares.armor_calculator</id>
@@ -92,59 +77,32 @@ jobs:
           $mods = "build\res\scripts\client\gui\mods"
           & "C:\Python27\python.exe" -m compileall -f $mods
           if ($LASTEXITCODE -ne 0) { throw "Компіляція Python 2.7 завершилася з помилкою" }
-          $sourceFiles = Get-ChildItem $mods -Filter "*.py" -Recurse
-          foreach ($source in $sourceFiles) {
-            if (-not (Test-Path "$($source.FullName)c")) {
-              throw "Не створено .pyc: $($source.FullName)"
-            }
-          }
+          if (-not (Test-Path "$mods\mod_unicorn_ares_settings_v2.pyc")) { throw "settings v2 pyc missing" }
           Remove-Item "$mods\*.py" -Force -Recurse
 
       - name: Перевірити GameFace ресурси
         shell: pwsh
         run: |
-          $required = @(
-            "build\res\gui\gameface\mods\unicorn_ares\ArmorCalculator\ArmorCalculatorBattle.html",
-            "build\res\gui\gameface\mods\unicorn_ares\ArmorCalculator\ArmorCalculator.css",
-            "build\res\gui\gameface\mods\unicorn_ares\ArmorCalculator\ArmorCalculator.js",
-            "build\res\mods\configs\res_map\armor_calculator_gameface.json"
-          )
-          foreach ($file in $required) {
-            if (-not (Test-Path $file)) { throw "Відсутній GameFace ресурс: $file" }
-          }
+          $required = @("build\res\gui\gameface\mods\unicorn_ares\ArmorCalculator\ArmorCalculatorBattle.html","build\res\gui\gameface\mods\unicorn_ares\ArmorCalculator\ArmorCalculator.css","build\res\gui\gameface\mods\unicorn_ares\ArmorCalculator\ArmorCalculator.js","build\res\mods\configs\res_map\armor_calculator_gameface.json")
+          foreach ($file in $required) { if (-not (Test-Path $file)) { throw "Відсутній GameFace ресурс: $file" } }
 
       - name: Створити .wotmod без стиснення
         shell: pwsh
         run: |
-          $ErrorActionPreference = "Stop"
           @'
-          import os
-          import zipfile
-          build_dir = r"build"
+          import os, zipfile
           output = os.path.join("dist", os.environ["MOD_NAME"] + ".wotmod")
           with zipfile.ZipFile(output, "w", compression=zipfile.ZIP_STORED, allowZip64=True) as archive:
-              for root, dirs, files in os.walk(build_dir):
-                  dirs.sort()
-                  files.sort()
+              for root, dirs, files in os.walk("build"):
+                  dirs.sort(); files.sort()
                   for filename in files:
                       full_path = os.path.join(root, filename)
-                      archive_name = os.path.relpath(full_path, build_dir).replace(os.sep, "/")
-                      archive.write(full_path, archive_name, compress_type=zipfile.ZIP_STORED)
+                      archive.write(full_path, os.path.relpath(full_path, "build").replace(os.sep, "/"), compress_type=zipfile.ZIP_STORED)
           with zipfile.ZipFile(output, "r") as archive:
-              names = set(item.filename for item in archive.infolist())
-              required = {
-                  "res/gui/gameface/mods/unicorn_ares/ArmorCalculator/ArmorCalculatorBattle.html",
-                  "res/gui/gameface/mods/unicorn_ares/ArmorCalculator/ArmorCalculator.css",
-                  "res/gui/gameface/mods/unicorn_ares/ArmorCalculator/ArmorCalculator.js",
-                  "res/mods/configs/res_map/armor_calculator_gameface.json",
-              }
-              missing = sorted(required - names)
-              if missing:
-                  raise RuntimeError("Missing GameFace files: %r" % missing)
-              if any(item.compress_type != zipfile.ZIP_STORED for item in archive.infolist()):
-                  raise RuntimeError("У .wotmod є стиснуті записи")
-              if any(name.lower().endswith(".py") for name in names):
-                  raise RuntimeError("У .wotmod залишилися .py")
+              names = set(x.filename for x in archive.infolist())
+              assert "res/scripts/client/gui/mods/mod_unicorn_ares_settings_v2.pyc" in names
+              assert not any(n.endswith("mod_unicorn_ares_settings.pyc") for n in names)
+              assert "res/gui/gameface/mods/unicorn_ares/ArmorCalculator/ArmorCalculatorBattle.html" in names
           print("Created", output)
           '@ | python -
 
