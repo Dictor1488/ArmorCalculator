@@ -6,7 +6,7 @@ on:
       version:
         description: "Версія збірки"
         required: true
-        default: "1.9.0"
+        default: "1.9.1"
   push:
     branches:
       - main
@@ -41,7 +41,7 @@ jobs:
         run: |
           if ("${{ github.event_name }}" -eq "workflow_dispatch") { $version = "${{ inputs.version }}" }
           elseif ("${{ github.ref_type }}" -eq "tag") { $version = "${{ github.ref_name }}" }
-          else { $version = "1.9.0" }
+          else { $version = "1.9.1" }
           $version = $version.TrimStart('v')
           "VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
           "MOD_NAME=unicorn.ares-armor-calculator-$version" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
