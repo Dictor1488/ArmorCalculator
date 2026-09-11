@@ -50,7 +50,7 @@ function resizeSurface(fontSize) {
   const visibleRows = root ? root.querySelectorAll('.row.visible').length : 0;
   const logicalWidth = 220;
   const lineHeight = Math.max(18, Math.ceil(fontSize * 1.15));
-  const logicalHeight = Math.max(4, visibleRows * lineHeight + 4);
+  const logicalHeight = Math.max(24, visibleRows * lineHeight + 4);
   const scale = gameUiScale();
   const width = Math.ceil(logicalWidth * scale);
   const height = Math.ceil(logicalHeight * scale);
