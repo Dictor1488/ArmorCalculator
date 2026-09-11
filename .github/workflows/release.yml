@@ -8,8 +8,6 @@ on:
         required: true
         default: "1.8.4"
   push:
-    branches:
-      - main
     tags:
       - "v*"
 
@@ -43,10 +41,8 @@ jobs:
         run: |
           if ("${{ github.event_name }}" -eq "workflow_dispatch") {
             $version = "${{ inputs.version }}"
-          } elseif ("${{ github.ref }}" -like "refs/tags/*") {
-            $version = "${{ github.ref_name }}"
           } else {
-            $version = "1.8.4"
+            $version = "${{ github.ref_name }}"
           }
           $version = $version.TrimStart('v')
           $modName = "unicorn.ares-armor-calculator-$version"
