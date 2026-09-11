@@ -57,6 +57,7 @@ class ArmorModel(ViewModel):
         self.onResized += self.__onResized
 
     def __onReady(self, *args):
+        print('unicorn.ares GameFace: ready')
         _position_window(*_LAST_SURFACE)
         _flush_pending()
 
@@ -69,6 +70,7 @@ class ArmorModel(ViewModel):
         except Exception:
             return
         _LAST_SURFACE = (width, height, game_scale)
+        print('unicorn.ares GameFace: resized %dx%d scale=%.3f' % (width, height, game_scale))
         _position_window(width, height, game_scale)
 
     def setPayload(self, value):
@@ -160,6 +162,7 @@ def ensure_window():
         _WINDOW = ArmorWindow(parent=parent)
         _WINDOW.load()
         _VIEW = _WINDOW.content
+        print('unicorn.ares GameFace: window loaded on layer 4')
         return True
     except Exception:
         LOG.exception('Failed to load GameFace ArmorCalculator')
