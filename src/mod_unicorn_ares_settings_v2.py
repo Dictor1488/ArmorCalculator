@@ -10,9 +10,9 @@ from unicorn_ares_constants import ArmorLabelSettings, PenLabelSettings, AngleLa
 from unicorn_ares_config import save_flat_config, get_config
 from unicorn_ares_gui import gui_state
 
-MOD_VERSION = "1.9.6"
+MOD_VERSION = "1.9.9"
 mod_linkage = "unicorn_ares_armor_calculator"
-modDataVersion = 7
+modDataVersion = 8
 
 TRANSLATIONS = {
     "en": {
@@ -102,9 +102,10 @@ TRANSLATIONS = {
 def _lang():
     if getClientLanguage is not None:
         try:
-            value = getClientLanguage()
-            if value in TRANSLATIONS:
-                return value
+            value = str(getClientLanguage() or "").lower().replace("-", "_")
+            short = value.split("_", 1)[0]
+            if short in TRANSLATIONS:
+                return short
         except Exception:
             pass
     return "en"
@@ -142,6 +143,8 @@ def _template():
 
 
 def _apply(settings):
+    if not settings:
+        return
     save_flat_config(settings)
     ArmorLabelSettings.ENABLED = settings.get("armor_label_enabled", ArmorLabelSettings.ENABLED)
     PenLabelSettings.ENABLED = settings.get("pen_label_enabled", PenLabelSettings.ENABLED)
@@ -156,13 +159,33 @@ def _apply(settings):
     gui_state.update_properties()
 
 
+def _is_our_linkage(linkage):
+    return linkage == mod_linkage or linkage == (mod_linkage,)
+
+
 def _on_settings_save(linkage, settings):
-    if linkage != mod_linkage:
+    if not _is_our_linkage(linkage):
         return
     _apply(settings)
 
 
+def _register_settings():
+    template = _template()
+    # Follow ModsSettingsAPI's documented lifecycle: load persisted settings first.
+    # Re-registering a fresh template on every startup can desynchronise the UI's
+    # saved values from the mod's own JSON config.
+    saved = g_modsSettingsApi.getModSettings(mod_linkage, template)
+    if saved:
+        _apply(saved)
+        g_modsSettingsApi.registerCallback(mod_linkage, _on_settings_save, None)
+        return
+
+    created = g_modsSettingsApi.setModTemplate(mod_linkage, template, _on_settings_save, None)
+    if created:
+        _apply(created)
+
+
 try:
-    g_modsSettingsApi.setModTemplate(mod_linkage, _template(), _on_settings_save, None)
+    _register_settings()
 except Exception as error:
     print("unicorn.ares settings registration failed: %s" % error)
