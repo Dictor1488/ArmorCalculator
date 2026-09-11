@@ -1,14 +1,16 @@
 <!DOCTYPE html>
-<html lang="en" style="width:220px;height:24px;">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="ArmorCalculator.css">
 </head>
-<body style="width:220px;height:24px;">
-  <div id="armor-root" aria-hidden="true">
-    <div id="armor-line" class="armor-line"></div>
+<body>
+  <div id="armor-root" class="hidden">
+    <div id="armor-holder">
+      <svg id="armor-hud" width="220" height="24" viewBox="0 0 220 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"></svg>
+    </div>
   </div>
-  <script type="module" src="ArmorCalculator.js"></script>
+  <script defer src="ArmorCalculator.js"></script>
 </body>
 </html>
