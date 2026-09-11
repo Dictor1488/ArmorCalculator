@@ -16,23 +16,25 @@ html, body {
   user-select: none;
 }
 #armor-root {
+  position: relative;
   width: 220px;
-  min-width: 220px;
   height: 24px;
-  min-height: 24px;
-  display: block;
   overflow: hidden;
-  text-align: center;
-  white-space: nowrap;
-  font-family: Arial, sans-serif;
-  font-weight: 700;
-  line-height: 1.2;
-  color: #ffffff;
-  text-shadow: 0 0 2px #000000, 0 0 3px #000000, 0 0 4px #000000;
 }
-.armor-line {
-  width: 100%;
+#armor-root.hidden {
+  visibility: hidden;
+}
+#armor-holder {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 220px;
   height: 24px;
-  line-height: 24px;
+  transform-origin: top left;
+}
+#armor-hud {
   display: block;
+  width: 220px;
+  height: 24px;
+  overflow: visible;
 }
