@@ -7,7 +7,6 @@ import GUI
 from PlayerEvents import g_playerEvents  # type: ignore
 from frameworks.wulf import ViewModel, ViewSettings, ViewFlags, WindowFlags, WindowLayer, WindowStatus
 from gui.impl.pub import ViewImpl, WindowImpl
-from skeletons.gui.app_loader import IAppLoader, GuiGlobalSpaceID
 from skeletons.gui.impl import IGuiLoader
 from helpers import dependency
 
@@ -29,6 +28,7 @@ _LAST_PAYLOAD = None
 _PENDING_PAYLOAD = None
 _RETRY_CALLBACK = None
 _LAST_SURFACE = (220, 28, 1.0)
+_BATTLE_READY = False
 
 
 def _safe_float(value, default=1.0):
@@ -46,10 +46,9 @@ def _safe_int(value, default=0):
 
 
 def _is_battle_ready():
+    if not _BATTLE_READY:
+        return False
     try:
-        app_loader = dependency.instance(IAppLoader)
-        if app_loader is None or app_loader.getSpaceID() != GuiGlobalSpaceID.BATTLE:
-            return False
         player = BigWorld.player()
         return player is not None and getattr(player, 'arena', None) is not None
     except Exception:
@@ -109,6 +108,8 @@ class ArmorView(ViewImpl):
 
 class ArmorWindow(WindowImpl):
     def __init__(self, parent=None):
+        # Passive HUD window: no Wulf parent, VIEW layer, never takes focus.
+        # This matches the native-visibility pattern proven by the working HpT mod.
         WindowImpl.__init__(self, WindowFlags.WINDOW, content=ArmorView(), layer=WindowLayer.VIEW, name='unicorn.ares ArmorCalculator')
 
     def _onReady(self):
@@ -151,14 +152,14 @@ def _position_window(surface_width=220, surface_height=28, game_scale=1.0):
 
 def _schedule_retry():
     global _RETRY_CALLBACK
-    if _RETRY_CALLBACK is None:
+    if _RETRY_CALLBACK is None and _BATTLE_READY:
         _RETRY_CALLBACK = BigWorld.callback(0.1, _retry_load)
 
 
 def _retry_load():
     global _RETRY_CALLBACK
     _RETRY_CALLBACK = None
-    if _PENDING_PAYLOAD is not None:
+    if _BATTLE_READY and _PENDING_PAYLOAD is not None:
         _push(_PENDING_PAYLOAD, force=True)
 
 
@@ -166,15 +167,16 @@ def ensure_window():
     global _WINDOW, _VIEW
     if _WINDOW is not None:
         return True
-    if not _OPENWG_OK:
+    if not _OPENWG_OK or not _is_battle_ready():
         return False
-    if not _is_battle_ready():
-        _schedule_retry()
-        return False
+
+    # onAvatarReady is the primary lifecycle gate. Keep the main-window check only
+    # as a final Wulf readiness guard for unusually slow UI initialization.
     main_window = _get_main_window()
     if main_window is None or getattr(main_window, 'proxy', None) is None or getattr(main_window, 'windowStatus', None) != WindowStatus.LOADED:
         _schedule_retry()
         return False
+
     try:
         _WINDOW = ArmorWindow()
         _WINDOW.load()
@@ -189,7 +191,8 @@ def ensure_window():
 
 
 def destroy_window(*args, **kwargs):
-    global _WINDOW, _VIEW, _LAST_PAYLOAD, _PENDING_PAYLOAD, _RETRY_CALLBACK
+    global _WINDOW, _VIEW, _LAST_PAYLOAD, _PENDING_PAYLOAD, _RETRY_CALLBACK, _BATTLE_READY
+    _BATTLE_READY = False
     if _RETRY_CALLBACK is not None:
         try:
             BigWorld.cancelCallback(_RETRY_CALLBACK)
@@ -205,6 +208,13 @@ def destroy_window(*args, **kwargs):
     _VIEW = None
     _LAST_PAYLOAD = None
     _PENDING_PAYLOAD = None
+
+
+def _on_avatar_ready(*args, **kwargs):
+    global _BATTLE_READY
+    _BATTLE_READY = True
+    if _PENDING_PAYLOAD is not None:
+        _push(_PENDING_PAYLOAD, force=True)
 
 
 def _flush_pending():
@@ -296,4 +306,5 @@ class GuiState(object):
 
 
 gui_state = GuiState()
+g_playerEvents.onAvatarReady += _on_avatar_ready
 g_playerEvents.onAvatarBecomeNonPlayer += destroy_window
