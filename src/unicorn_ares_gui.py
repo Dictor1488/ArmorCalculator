@@ -44,6 +44,14 @@ def _safe_int(value, default=0):
         return default
 
 
+def _is_battle_avatar():
+    try:
+        player = BigWorld.player()
+        return player is not None and getattr(player, 'arena', None) is not None
+    except Exception:
+        return False
+
+
 class ArmorModel(ViewModel):
     def __init__(self, properties=1, commands=2):
         super(ArmorModel, self).__init__(properties=properties, commands=commands)
@@ -144,24 +152,32 @@ def _position_window(surface_width=220, surface_height=28, game_scale=1.0):
         LOG.exception('Failed to position GameFace window')
 
 
+def _schedule_retry():
+    global _RETRY_CALLBACK
+    if _RETRY_CALLBACK is None:
+        _RETRY_CALLBACK = BigWorld.callback(0.1, _retry_load)
+
+
 def _retry_load():
     global _RETRY_CALLBACK
     _RETRY_CALLBACK = None
     if _PENDING_PAYLOAD is not None:
-        _push(_PENDING_PAYLOAD)
+        _push(_PENDING_PAYLOAD, force=True)
 
 
 def ensure_window():
-    global _WINDOW, _VIEW, _RETRY_CALLBACK
+    global _WINDOW, _VIEW
     if _WINDOW is not None:
         return True
-    if not _OPENWG_OK:
+    if not _OPENWG_OK or not _is_battle_avatar():
         return False
-    parent = _get_main_window()
-    if parent is None or getattr(parent, 'proxy', None) is None or getattr(parent, 'windowStatus', None) != WindowStatus.LOADED:
-        if _RETRY_CALLBACK is None:
-            _RETRY_CALLBACK = BigWorld.callback(0.1, _retry_load)
+
+    main_window = _get_main_window()
+    if (main_window is None or getattr(main_window, 'proxy', None) is None or
+            getattr(main_window, 'windowStatus', None) != WindowStatus.LOADED):
+        _schedule_retry()
         return False
+
     try:
         _WINDOW = ArmorWindow()
         _WINDOW.load()
@@ -209,8 +225,14 @@ def _push(payload, force=False):
         return
     if not force and raw == _LAST_PAYLOAD:
         return
+
+    view_model = _VIEW.viewModel
+    if view_model is None:
+        _schedule_retry()
+        return
+
     try:
-        with _VIEW.viewModel.transaction() as model:
+        with view_model.transaction() as model:
             model.setPayload(raw)
         _LAST_PAYLOAD = raw
     except Exception:
