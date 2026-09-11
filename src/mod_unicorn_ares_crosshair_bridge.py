@@ -16,11 +16,6 @@ _SESSION = dependency.instance(IBattleSessionProvider)
 _RESOLVER = gun_marker_ctrl.createShotResultResolver()
 _SUBSCRIBED = False
 _RETRY = None
-_FIRST_UPDATE_LOGGED = False
-
-
-def _log(message):
-    print('unicorn.ares crosshair bridge: ' + str(message))
 
 
 def _get_jet_loss(shell):
@@ -131,8 +126,6 @@ def _get_shot(player, gun_marker_state):
 
 
 def _compute_and_show(gun_marker_state):
-    global _FIRST_UPDATE_LOGGED
-
     if gun_marker_state is None:
         gui_state.hide_all()
         return
@@ -164,8 +157,7 @@ def _compute_and_show(gun_marker_state):
         if isinstance(current_pen, (tuple, list)):
             current_pen = current_pen[0]
         current_pen = float(current_pen)
-    except Exception as error:
-        _log('compute failed: %s' % error)
+    except Exception:
         gui_state.hide_all()
         return
 
@@ -202,12 +194,6 @@ def _compute_and_show(gun_marker_state):
         0,
     )
 
-    if not _FIRST_UPDATE_LOGGED:
-        _FIRST_UPDATE_LOGGED = True
-        _log('first marker update: armor=%.1f pen=%.1f body=%s ricochet=%s' % (
-            armor, current_pen, hit_body, ricochet
-        ))
-
 
 def _on_marker_changed(marker_type, gun_marker_state, support_markers_info):
     _compute_and_show(gun_marker_state)
@@ -224,7 +210,6 @@ def _subscribe():
             raise RuntimeError('crosshair controller is not ready')
         crosshair.onGunMarkerStateChanged += _on_marker_changed
         _SUBSCRIBED = True
-        _log('subscribed to onGunMarkerStateChanged')
     except Exception:
         _RETRY = BigWorld.callback(0.25, _subscribe)
 
@@ -259,4 +244,3 @@ def _on_avatar_non_player(*args, **kwargs):
 
 g_playerEvents.onAvatarBecomePlayer += _on_avatar_player
 g_playerEvents.onAvatarBecomeNonPlayer += _on_avatar_non_player
-_log('loaded v1.8.8')
