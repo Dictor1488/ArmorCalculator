@@ -29,6 +29,7 @@ _PENDING_PAYLOAD = None
 _RETRY_CALLBACK = None
 _LAST_SURFACE = (220, 28, 1.0)
 _FIRST_VISIBLE_PUSH_LOGGED = False
+_RENDER_ACK_LOGGED = False
 
 
 def _safe_float(value, default=1.0):
@@ -46,7 +47,7 @@ def _safe_int(value, default=0):
 
 
 class ArmorModel(ViewModel):
-    def __init__(self, properties=1, commands=2):
+    def __init__(self, properties=1, commands=3):
         super(ArmorModel, self).__init__(properties=properties, commands=commands)
 
     def _initialize(self):
@@ -56,6 +57,8 @@ class ArmorModel(ViewModel):
         self.onReady += self.__onReady
         self.onResized = self._addCommand('onResized')
         self.onResized += self.__onResized
+        self.onRendered = self._addCommand('onRendered')
+        self.onRendered += self.__onRendered
 
     def __onReady(self, *args):
         print('unicorn.ares GameFace: ready')
@@ -73,6 +76,17 @@ class ArmorModel(ViewModel):
         _LAST_SURFACE = (width, height, game_scale)
         print('unicorn.ares GameFace: resized %dx%d scale=%.3f' % (width, height, game_scale))
         _position_window(width, height, game_scale)
+
+    def __onRendered(self, data=None, *args):
+        global _RENDER_ACK_LOGGED
+        if _RENDER_ACK_LOGGED:
+            return
+        _RENDER_ACK_LOGGED = True
+        try:
+            text = data.get('text', '') if data else ''
+        except Exception:
+            text = ''
+        print('unicorn.ares GameFace: rendered text=%s' % text)
 
     def getPayload(self):
         return self._getString(0)
@@ -176,7 +190,7 @@ def ensure_window():
 
 
 def destroy_window(*args, **kwargs):
-    global _WINDOW, _VIEW, _LAST_PAYLOAD, _PENDING_PAYLOAD, _RETRY_CALLBACK, _FIRST_VISIBLE_PUSH_LOGGED
+    global _WINDOW, _VIEW, _LAST_PAYLOAD, _PENDING_PAYLOAD, _RETRY_CALLBACK, _FIRST_VISIBLE_PUSH_LOGGED, _RENDER_ACK_LOGGED
     if _RETRY_CALLBACK is not None:
         try:
             BigWorld.cancelCallback(_RETRY_CALLBACK)
@@ -193,6 +207,7 @@ def destroy_window(*args, **kwargs):
     _LAST_PAYLOAD = None
     _PENDING_PAYLOAD = None
     _FIRST_VISIBLE_PUSH_LOGGED = False
+    _RENDER_ACK_LOGGED = False
 
 
 def _flush_pending():
