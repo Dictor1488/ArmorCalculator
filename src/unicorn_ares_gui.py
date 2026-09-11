@@ -114,16 +114,22 @@ class ArmorView(ViewImpl):
 
 class ArmorWindow(WindowImpl):
     def __init__(self, parent=None):
-        super(ArmorWindow, self).__init__(
+        # Match the working HpT native-window fix exactly: passive VIEW window
+        # without a Wulf parent, shown explicitly with focus disabled.
+        WindowImpl.__init__(
+            self,
             WindowFlags.WINDOW,
             content=ArmorView(),
             layer=WindowLayer.VIEW,
-            name='unicorn.ares ArmorCalculator',
-            parent=parent
+            name='unicorn.ares ArmorCalculator'
         )
 
     def _onReady(self):
-        pass
+        try:
+            self.show(focus=False)
+            print('unicorn.ares GameFace: native window shown focus=False')
+        except Exception:
+            LOG.exception('Failed to show native GameFace window')
 
 
 def _get_main_window():
@@ -154,6 +160,8 @@ def _position_window(surface_width=220, surface_height=28, game_scale=1.0):
     target_y = int(round(screen_h / (2.0 * scale) + y_offset / scale - first_row_center))
     try:
         _WINDOW.move(target_x, target_y)
+        print('unicorn.ares GameFace: moved to %d,%d screen=%dx%d surface=%dx%d scale=%.3f' % (
+            target_x, target_y, screen_w, screen_h, surface_width, surface_height, scale))
     except Exception:
         LOG.exception('Failed to position GameFace window')
 
@@ -177,7 +185,7 @@ def ensure_window():
             _RETRY_CALLBACK = BigWorld.callback(0.1, _retry_load)
         return False
     try:
-        _WINDOW = ArmorWindow(parent=parent)
+        _WINDOW = ArmorWindow()
         _WINDOW.load()
         _VIEW = _WINDOW.content
         print('unicorn.ares GameFace: window loaded on layer 4')
