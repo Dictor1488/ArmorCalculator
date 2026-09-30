@@ -387,6 +387,25 @@ def _compute_and_show(gun_marker_state):
     if not ricochet and hit_body and current_pen > 0.0:
         prob = int(_gaussian_probability(current_pen, armor))
 
+    # The main armor readout color describes whether the current shell can pass
+    # the armor layers under the reticle. It must not depend on hit_body:
+    # tracks/screens can be penetrable even when no HP-damaging body layer is
+    # behind them. Use WoT's native penetration-randomization thresholds.
+    armor_color_state = 'low'
+    if not ricochet and current_pen > 0.0:
+        try:
+            min_pp, max_pp = _RESOLVER._computePiercingPowerRandomization(shell)
+            piercing_percent = float(armor) / float(current_pen) * 100.0
+            if piercing_percent <= float(min_pp):
+                armor_color_state = 'high'
+            elif piercing_percent < float(max_pp):
+                armor_color_state = 'medium'
+        except Exception:
+            if armor < current_pen:
+                armor_color_state = 'high'
+            elif armor == current_pen:
+                armor_color_state = 'medium'
+
     kill_prob = 0
     if prob > 0 and hit_body:
         try:
@@ -409,6 +428,7 @@ def _compute_and_show(gun_marker_state):
         hit_angle,
         current_pen,
         kill_prob,
+        armor_color_state,
     )
 
 
