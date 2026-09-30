@@ -258,22 +258,22 @@ class GuiState(object):
         self.last_args = None
         _push({'visible': False})
 
-    def update_gui(self, armor_value, prob, ricochet, hit_body, hit_track, hit_gun, hit_angle, avg_pen, kill_prob):
+    def update_gui(self, armor_value, prob, ricochet, hit_body, hit_track, hit_gun, hit_angle, avg_pen, kill_prob, armor_color_state='low'):
         armor_value = int(armor_value)
         avg_pen = int(avg_pen)
         prob = int(prob)
         hit_angle = int(hit_angle)
         kill_prob = int(kill_prob)
-        self.last_args = (armor_value, prob, bool(ricochet), bool(hit_body), bool(hit_track), bool(hit_gun), hit_angle, avg_pen, kill_prob)
+        self.last_args = (armor_value, prob, bool(ricochet), bool(hit_body), bool(hit_track), bool(hit_gun), hit_angle, avg_pen, kill_prob, armor_color_state)
         if not hit_body and armor_value <= 0:
             self.hide_all()
             return
         cfg = get_config()
         colorblind = bool(cfg.get('colorblind', False))
         colors = cfg.get('colors', {})
-        if ricochet or prob <= 7:
+        if ricochet or armor_color_state == 'low':
             color = colors.get('colorblind_red', 'A970FF') if colorblind else colors.get('red_chance', 'E90000')
-        elif prob >= 93:
+        elif armor_color_state == 'high':
             color = colors.get('green_chance', '6BF40D')
         else:
             color = colors.get('medium_chance', 'FFFF00')
