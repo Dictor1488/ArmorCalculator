@@ -8,6 +8,7 @@ from DestructibleEntity import DestructibleEntity  # type: ignore
 from Vehicle import Vehicle as VehicleEntity  # type: ignore
 from PlayerEvents import g_playerEvents  # type: ignore
 from helpers import dependency
+from helpers_common import computeDistanceFactor
 from items.components.component_constants import (  # type: ignore
     MODERN_HE_PIERCING_POWER_REDUCTION_FACTOR_FOR_SHIELDS,
     MODERN_HE_DAMAGE_ABSORPTION_FACTOR,
@@ -310,28 +311,15 @@ def _distance_to_hit(player, hit_point):
             return 0.0
 
 
-def _base_penetration(pp_desc):
-    try:
-        if isinstance(pp_desc, (tuple, list)):
-            return float(pp_desc[0])
-        return float(pp_desc)
-    except Exception:
-        return 0.0
-
-
 def _current_penetration(shot, shell, distance):
-    try:
-        if shell.kind == constants.SHELL_TYPES.HOLLOW_CHARGE:
-            return _base_penetration(shot.piercingPower)
-    except Exception:
-        pass
-
-    value = gun_marker_ctrl.computePiercingPowerAtDist(
+    # Mirror the native 2.4.1 crosshair resolver instead of keeping a separate
+    # HEAT path. This keeps AP/APCR/HEAT and shells with distance factors in
+    # sync with the client and avoids zero penetration on HOLLOW_CHARGE ammo.
+    value = _RESOLVER._computePiercingPowerAtDist(
         shot.piercingPower, distance, shot.maxDistance, 1
     )
-    if isinstance(value, (tuple, list)):
-        value = value[0]
-    return float(value)
+    value *= computeDistanceFactor(shell, distance, 'pierceFactor')
+    return max(0.0, float(value))
 
 
 def _compute_and_show(gun_marker_state):
