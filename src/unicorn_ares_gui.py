@@ -6,22 +6,14 @@ import BigWorld
 import GUI
 from PlayerEvents import g_playerEvents  # type: ignore
 from frameworks.wulf import ViewModel, ViewSettings, ViewFlags, WindowFlags, WindowLayer, WindowStatus
+from gui.impl.gen import R
 from gui.impl.pub import ViewImpl, WindowImpl
 from skeletons.gui.impl import IGuiLoader
 from helpers import dependency
 
-try:
-    from openwg_gameface import ModDynAccessor
-    _OPENWG_OK = True
-except Exception:
-    ModDynAccessor = None
-    _OPENWG_OK = False
-
 from unicorn_ares_config import get_config
 
 LOG = logging.getLogger('[unicorn.ares ArmorCalculator]')
-RES_MAP_ITEM_ID = 'mods/unicorn_ares/ArmorCalculatorBattle/layoutID'
-
 _WINDOW = None
 _VIEW = None
 _LAST_PAYLOAD = None
@@ -90,14 +82,9 @@ class ArmorModel(ViewModel):
 
 
 class ArmorView(ViewImpl):
-    if _OPENWG_OK:
-        viewLayoutID = ModDynAccessor(RES_MAP_ITEM_ID)
-    else:
-        viewLayoutID = None
+    viewLayoutID = R.mods.me.inq.armor_calculator.ArmorCalculatorBattle
 
     def __init__(self):
-        if not _OPENWG_OK:
-            raise RuntimeError('OpenWG.Gameface is required')
         settings = ViewSettings(ArmorView.viewLayoutID(), flags=ViewFlags.VIEW, model=ArmorModel())
         super(ArmorView, self).__init__(settings)
 
@@ -167,7 +154,7 @@ def ensure_window():
     global _WINDOW, _VIEW
     if _WINDOW is not None:
         return True
-    if not _OPENWG_OK or not _is_battle_ready():
+    if not _is_battle_ready():
         return False
 
     # onAvatarReady is the primary lifecycle gate. Keep the main-window check only
