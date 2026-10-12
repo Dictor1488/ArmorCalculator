@@ -1,0 +1,11 @@
+[
+  {
+    "type": "Layout",
+    "id": "R.mods.me.inq.armor_calculator.ArmorCalculatorBattle",
+    "path": "coui://gui/gameface/mods/unicorn_ares/ArmorCalculator/ArmorCalculatorBattle.html",
+    "parameters": {
+      "entrance": "ArmorCalculatorBattle",
+      "impl": "gameface"
+    }
+  }
+]
