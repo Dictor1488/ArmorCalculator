@@ -63,7 +63,7 @@ jobs:
             <id>unicorn.ares.armor_calculator</id>
             <version>${{ env.VERSION }}</version>
             <name>unicorn.ares Armor Calculator</name>
-            <description>GameFace armor penetration calculator for World of Tanks. Requires OpenWG.Gameface.</description>
+            <description>GameFace armor penetration calculator for World of Tanks 2.4.1.</description>
           </root>
           "@ | Set-Content -Path "build\meta.xml" -Encoding UTF8
 
