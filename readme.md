@@ -53,9 +53,9 @@ mods/configs/unicorn.ares/armor-calculator.json
 
 Старий конфіг `mods/configs/pademinune/armor-calculator.json`, якщо він існує, використовується лише для одноразової міграції налаштувань.
 
-## Залежність
+## Реєстрація GameFace (WoT 2.4.1)
 
-Для GameFace HUD потрібен **OpenWG.Gameface**. Власний layout мода реєструється через `res/mods/configs/res_map/armor_calculator_gameface.json` усередині `.wotmod`.
+Layout реєструється через `res/gui/gen_resources/me.inq.armor_calculator.json` у `.wotmod`, а Python використовує `R.mods.me.inq.armor_calculator.ArmorCalculatorBattle` замість `ModDynAccessor`.
 
 ## Встановлення
 
@@ -65,7 +65,7 @@ mods/configs/unicorn.ares/armor-calculator.json
 World_of_Tanks/mods/номер_версії/
 ```
 
-Після першої появи нового `res_map` OpenWG.Gameface може потребувати одноразового перезапуску клієнта для оновлення карти ресурсів.
+Після заміни версії мода перезапустіть клієнт гри, щоб він завантажив оновлені ресурси.
 
 ## Принцип розрахунку
 
