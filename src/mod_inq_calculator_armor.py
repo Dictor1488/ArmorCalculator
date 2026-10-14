@@ -14,7 +14,7 @@ from inq_calculator_gui import gui_state
 
 
 def log(message):
-    print("me.inq Inq Calculator: " + str(message))
+    print("Inq Calculator: " + str(message))
 
 
 log("Mod is loading")
