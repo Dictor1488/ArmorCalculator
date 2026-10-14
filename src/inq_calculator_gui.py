@@ -11,9 +11,9 @@ from gui.impl.pub import ViewImpl, WindowImpl
 from skeletons.gui.impl import IGuiLoader
 from helpers import dependency
 
-from unicorn_ares_config import get_config
+from inq_calculator_config import get_config
 
-LOG = logging.getLogger('[unicorn.ares ArmorCalculator]')
+LOG = logging.getLogger('[me.inq InqCalculator]')
 _WINDOW = None
 _VIEW = None
 _LAST_PAYLOAD = None
@@ -82,7 +82,7 @@ class ArmorModel(ViewModel):
 
 
 class ArmorView(ViewImpl):
-    viewLayoutID = R.mods.me.inq.armor_calculator.ArmorCalculatorBattle
+    viewLayoutID = R.mods.me.inq.calculator.InqCalculatorBattle
 
     def __init__(self):
         settings = ViewSettings(ArmorView.viewLayoutID(), flags=ViewFlags.VIEW, model=ArmorModel())
@@ -97,7 +97,7 @@ class ArmorWindow(WindowImpl):
     def __init__(self, parent=None):
         # Passive HUD window: no Wulf parent, VIEW layer, never takes focus.
         # This matches the native-visibility pattern proven by the working HpT mod.
-        WindowImpl.__init__(self, WindowFlags.WINDOW, content=ArmorView(), layer=WindowLayer.VIEW, name='unicorn.ares ArmorCalculator')
+        WindowImpl.__init__(self, WindowFlags.WINDOW, content=ArmorView(), layer=WindowLayer.VIEW, name='me.inq InqCalculator')
 
     def _onReady(self):
         try:
@@ -170,7 +170,7 @@ def ensure_window():
         _VIEW = _WINDOW.content
         return True
     except Exception:
-        LOG.exception('Failed to load GameFace ArmorCalculator')
+        LOG.exception('Failed to load GameFace InqCalculator')
         _WINDOW = None
         _VIEW = None
         _schedule_retry()

@@ -15,7 +15,7 @@ from items.components.component_constants import (  # type: ignore
 )
 from skeletons.gui.battle_session import IBattleSessionProvider  # type: ignore
 
-from unicorn_ares_gui import gui_state
+from inq_calculator_gui import gui_state
 
 
 _SESSION = dependency.instance(IBattleSessionProvider)

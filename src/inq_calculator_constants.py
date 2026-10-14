@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from unicorn_ares_config import user_settings, DEFAULT_CONFIG
+from inq_calculator_config import user_settings, DEFAULT_CONFIG
 
 
 def safe_get_setting(label, attribute):

@@ -1,4 +1,4 @@
-# unicorn.ares Armor Calculator
+# me.inq Inq Calculator
 
 Легкий калькулятор пробиття броні для World of Tanks. Мод показує ефективну броню в точці прицілу та, за бажанням, додаткові параметри пострілу.
 
@@ -48,14 +48,14 @@ HUD працює як один маленький пасивний `WindowLayer.
 Конфіг:
 
 ```text
-mods/configs/unicorn.ares/armor-calculator.json
+mods/configs/me.inq/inq-calculator.json
 ```
 
-Старий конфіг `mods/configs/pademinune/armor-calculator.json`, якщо він існує, використовується лише для одноразової міграції налаштувань.
+Старі конфіги `mods/configs/unicorn.ares/armor-calculator.json` і `mods/configs/pademinune/armor-calculator.json`, якщо він існує, використовується лише для одноразової міграції налаштувань.
 
 ## Реєстрація GameFace (WoT 2.4.1)
 
-Layout реєструється через `res/gui/gen_resources/me.inq.armor_calculator.json` у `.wotmod`, а Python використовує `R.mods.me.inq.armor_calculator.ArmorCalculatorBattle` замість `ModDynAccessor`.
+Layout реєструється через `res/gui/gen_resources/me.inq.calculator.json` у `.wotmod`, а Python використовує `R.mods.me.inq.calculator.InqCalculatorBattle` замість `ModDynAccessor`.
 
 ## Встановлення
 

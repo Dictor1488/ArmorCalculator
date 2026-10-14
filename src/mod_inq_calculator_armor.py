@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-"""Lightweight Armor Calculator lifecycle hooks.
+"""Lightweight Inq Calculator lifecycle hooks.
 
 Armor/penetration calculation now lives exclusively in
-mod_unicorn_ares_crosshair_bridge.py and uses WoT's own shot-result resolver.
+mod_inq_calculator_crosshair_bridge.py and uses WoT's own shot-result resolver.
 Keeping a second patched copy of _CrosshairShotResults here caused duplicate
 GUI updates and made HE/HEAT behaviour depend on which callback ran last.
 """
@@ -10,11 +10,11 @@ GUI updates and made HE/HEAT behaviour depend on which callback ran last.
 from AvatarInputHandler import AvatarInputHandler  # type: ignore
 from PlayerEvents import g_playerEvents  # type: ignore
 
-from unicorn_ares_gui import gui_state
+from inq_calculator_gui import gui_state
 
 
 def log(message):
-    print("unicorn.ares Armor Calculator: " + str(message))
+    print("me.inq Inq Calculator: " + str(message))
 
 
 log("Mod is loading")

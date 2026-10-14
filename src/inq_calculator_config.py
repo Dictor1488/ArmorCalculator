@@ -15,9 +15,12 @@ DEFAULT_CONFIG = {
     "shadow": {"shadow_color": "000000", "shadow_alpha": 8, "shadow_length": 3, "shadow_strength": 7},
 }
 
-CONFIG_FOLDER = os.path.join("mods", "configs", "unicorn.ares")
-CONFIG_PATH = os.path.join(CONFIG_FOLDER, "armor-calculator.json")
-LEGACY_CONFIG_PATH = os.path.join("mods", "configs", "pademinune", "armor-calculator.json")
+CONFIG_FOLDER = os.path.join("mods", "configs", "me.inq")
+CONFIG_PATH = os.path.join(CONFIG_FOLDER, "inq-calculator.json")
+LEGACY_CONFIG_PATHS = [
+    os.path.join("mods", "configs", "unicorn.ares", "armor-calculator.json"),
+    os.path.join("mods", "configs", "pademinune", "armor-calculator.json"),
+]
 
 
 def create_config():
@@ -105,17 +108,22 @@ def get_config():
 
 
 if not os.path.isfile(CONFIG_PATH):
-    if os.path.isfile(LEGACY_CONFIG_PATH):
-        if not os.path.exists(CONFIG_FOLDER):
-            os.makedirs(CONFIG_FOLDER)
+    migrated = False
+    for legacy_path in LEGACY_CONFIG_PATHS:
+        if not os.path.isfile(legacy_path):
+            continue
         try:
-            with open(LEGACY_CONFIG_PATH) as src:
+            if not os.path.exists(CONFIG_FOLDER):
+                os.makedirs(CONFIG_FOLDER)
+            with open(legacy_path) as src:
                 legacy = json.load(src)
             with open(CONFIG_PATH, "w") as dst:
                 json.dump(legacy, dst, indent=4)
+            migrated = True
+            break
         except Exception:
-            create_config()
-    else:
+            pass
+    if not migrated:
         create_config()
 
 try:

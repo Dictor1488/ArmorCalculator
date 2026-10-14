@@ -1,0 +1,11 @@
+[
+  {
+    "type": "Layout",
+    "id": "R.mods.me.inq.calculator.InqCalculatorBattle",
+    "path": "coui://gui/gameface/mods/inq_calculator/InqCalculator/InqCalculatorBattle.html",
+    "parameters": {
+      "entrance": "InqCalculatorBattle",
+      "impl": "gameface"
+    }
+  }
+]

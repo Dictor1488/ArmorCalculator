@@ -6,17 +6,17 @@ try:
 except ImportError:
     getClientLanguage = None
 
-from unicorn_ares_constants import ArmorLabelSettings, PenLabelSettings, AngleLabelSettings, EffPenLabelSettings, KillLabelSettings, GunLabelSettings
-from unicorn_ares_config import save_flat_config, get_config
-from unicorn_ares_gui import gui_state
+from inq_calculator_constants import ArmorLabelSettings, PenLabelSettings, AngleLabelSettings, EffPenLabelSettings, KillLabelSettings, GunLabelSettings
+from inq_calculator_config import save_flat_config, get_config
+from inq_calculator_gui import gui_state
 
 MOD_VERSION = "1.9.9"
-mod_linkage = "unicorn_ares_armor_calculator"
+mod_linkage = "inq_calculator_calculator"
 modDataVersion = 8
 
 TRANSLATIONS = {
     "en": {
-        "title": "unicorn.ares Armor Calculator",
+        "title": "me.inq Inq Calculator",
         "display": "Display",
         "armor": "Penetration / armor",
         "armor_tip": "Main line: shell penetration / effective armor.",
@@ -43,7 +43,7 @@ TRANSLATIONS = {
         "angle_from_tip": "The angle is shown only from this value, in degrees."
     },
     "uk": {
-        "title": "unicorn.ares Armor Calculator",
+        "title": "me.inq Inq Calculator",
         "display": "Що показувати",
         "armor": "Пробиття / броня",
         "armor_tip": "Основний рядок: пробиття снаряда / приведена броня.",
@@ -70,7 +70,7 @@ TRANSLATIONS = {
         "angle_from_tip": "Кут буде показаний лише починаючи з цього значення, у градусах."
     },
     "ru": {
-        "title": "unicorn.ares Armor Calculator",
+        "title": "me.inq Inq Calculator",
         "display": "Что показывать",
         "armor": "Пробитие / броня",
         "armor_tip": "Основная строка: пробитие снаряда / приведённая броня.",
@@ -188,4 +188,4 @@ def _register_settings():
 try:
     _register_settings()
 except Exception as error:
-    print("unicorn.ares settings registration failed: %s" % error)
+    print("me.inq settings registration failed: %s" % error)
