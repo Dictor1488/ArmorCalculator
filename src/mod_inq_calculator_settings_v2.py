@@ -16,7 +16,7 @@ modDataVersion = 8
 
 TRANSLATIONS = {
     "en": {
-        "title": "me.inq Inq Calculator",
+        "title": "Inq Calculator",
         "display": "Display",
         "armor": "Penetration / armor",
         "armor_tip": "Main line: shell penetration / effective armor.",
@@ -43,7 +43,7 @@ TRANSLATIONS = {
         "angle_from_tip": "The angle is shown only from this value, in degrees."
     },
     "uk": {
-        "title": "me.inq Inq Calculator",
+        "title": "Inq Calculator",
         "display": "Що показувати",
         "armor": "Пробиття / броня",
         "armor_tip": "Основний рядок: пробиття снаряда / приведена броня.",
@@ -70,7 +70,7 @@ TRANSLATIONS = {
         "angle_from_tip": "Кут буде показаний лише починаючи з цього значення, у градусах."
     },
     "ru": {
-        "title": "me.inq Inq Calculator",
+        "title": "Inq Calculator",
         "display": "Что показывать",
         "armor": "Пробитие / броня",
         "armor_tip": "Основная строка: пробитие снаряда / приведённая броня.",
