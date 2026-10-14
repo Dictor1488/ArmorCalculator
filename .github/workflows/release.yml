@@ -41,7 +41,7 @@ jobs:
           else { $version = "${{ github.ref_name }}" }
           $version = $version.TrimStart('v')
           "VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-          "MOD_NAME=me.inq-inq-calculator-$version" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "MOD_NAME=me.inq.calculator-$version" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
       - name: Підготувати структуру мода
         shell: pwsh
@@ -62,7 +62,7 @@ jobs:
           <root>
             <id>me.inq.calculator</id>
             <version>${{ env.VERSION }}</version>
-            <name>me.inq Inq Calculator</name>
+            <name>Inq Calculator</name>
             <description>GameFace armor penetration calculator for World of Tanks 2.4.1.</description>
           </root>
           "@ | Set-Content -Path "build\meta.xml" -Encoding UTF8
@@ -126,7 +126,7 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           tag: v${{ env.VERSION }}
-          name: me.inq Inq Calculator ${{ env.VERSION }}
+          name: Inq Calculator ${{ env.VERSION }}
           artifacts: "dist/*.wotmod,dist/*.zip"
           artifactErrorsFailBuild: true
           allowUpdates: true
