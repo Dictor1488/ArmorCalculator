@@ -10,7 +10,7 @@ from inq_calculator_constants import ArmorLabelSettings, PenLabelSettings, Angle
 from inq_calculator_config import save_flat_config, get_config
 from inq_calculator_gui import gui_state
 
-MOD_VERSION = "1.9.9"
+MOD_VERSION = "2.0.1"
 mod_linkage = "inq_calculator_calculator"
 modDataVersion = 8
 
