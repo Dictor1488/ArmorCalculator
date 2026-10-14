@@ -6,7 +6,7 @@ on:
       version:
         description: "Версія збірки"
         required: true
-        default: "1.9.9"
+        default: "2.0.1"
   push:
     tags:
       - "v*"
