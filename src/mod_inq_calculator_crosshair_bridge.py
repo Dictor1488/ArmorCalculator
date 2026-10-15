@@ -8,7 +8,6 @@ from DestructibleEntity import DestructibleEntity  # type: ignore
 from Vehicle import Vehicle as VehicleEntity  # type: ignore
 from PlayerEvents import g_playerEvents  # type: ignore
 from helpers import dependency
-from helpers_common import computeDistanceFactor
 from items.components.component_constants import (  # type: ignore
     MODERN_HE_PIERCING_POWER_REDUCTION_FACTOR_FOR_SHIELDS,
     MODERN_HE_DAMAGE_ABSORPTION_FACTOR,
@@ -312,13 +311,12 @@ def _distance_to_hit(player, hit_point):
 
 
 def _current_penetration(shot, shell, distance):
-    # Mirror the native 2.4.1 crosshair resolver instead of keeping a separate
-    # HEAT path. This keeps AP/APCR/HEAT and shells with distance factors in
-    # sync with the client and avoids zero penetration on HOLLOW_CHARGE ammo.
-    value = _RESOLVER._computePiercingPowerAtDist(
+    # WoT 2.4.1 EU computes distance penetration directly in gun_marker_ctrl.
+    # The old helpers_common.computeDistanceFactor and resolver instance method
+    # are no longer present. Do not apply an extra distance multiplier.
+    value = gun_marker_ctrl.computePiercingPowerAtDist(
         shot.piercingPower, distance, shot.maxDistance, 1
     )
-    value *= computeDistanceFactor(shell, distance, 'pierceFactor')
     value = float(value)
     if math.isnan(value) or math.isinf(value) or value <= 0.0:
         return 0.0
