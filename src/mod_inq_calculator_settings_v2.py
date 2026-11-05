@@ -1,5 +1,13 @@
 # -*- coding: utf-8 -*-
-from gui.modsSettingsApi import g_modsSettingsApi, templates  # type: ignore
+# Prefer the Gameface Aslain menu, while retaining the legacy settings fallback.
+try:
+    from gui.aslainMenu import g_modsSettingsApi, templates  # type: ignore
+    _ASLAIN_MENU = True
+except ImportError:
+    from gui.modsSettingsApi import g_modsSettingsApi, templates  # type: ignore
+    _ASLAIN_MENU = False
+
+from inq_calculator_preview import render_preview, SLOT as PREVIEW_SLOT, WIDTH as PREVIEW_WIDTH, HEIGHT as PREVIEW_HEIGHT
 
 try:
     from helpers import getClientLanguage  # type: ignore
@@ -12,12 +20,13 @@ from inq_calculator_gui import gui_state
 
 MOD_VERSION = "2.0.1"
 mod_linkage = "inq_calculator_calculator"
-modDataVersion = 11
+modDataVersion = 12
 
 TRANSLATIONS = {
     "en": {
         "title": "Inq Calculator",
         "display": "Main indicators",
+        "preview": "Live preview (illustrative values)",
         "armor": "Penetration / effective armor",
         "armor_tip": "Shows current shell penetration first, then effective armor at the aiming point. Example: 250 / 230.",
         "chance": "Penetration chance",
@@ -49,6 +58,7 @@ TRANSLATIONS = {
     "uk": {
         "title": "Inq Calculator",
         "display": "Основні показники",
+        "preview": "Живий перегляд (умовні значення)",
         "armor": "Пробиття / приведена броня",
         "armor_tip": "Спочатку пробиття поточного снаряда, потім приведена броня в точці прицілювання. Приклад: 250 / 230.",
         "chance": "Шанс пробиття",
@@ -80,6 +90,7 @@ TRANSLATIONS = {
     "ru": {
         "title": "Inq Calculator",
         "display": "Основные показатели",
+        "preview": "Живой просмотр (пример значений)",
         "armor": "Пробитие / приведённая броня",
         "armor_tip": "Сначала пробитие текущего снаряда, затем приведённая броня в точке прицеливания. Пример: 250 / 230.",
         "chance": "Шанс пробития",
@@ -132,10 +143,55 @@ def _section_divider():
     return templates.createLabel(u'────────────────────────────')
 
 
+def _preview_values():
+    cfg = get_config()
+    values = {}
+    for name in ('armor_label', 'pen_label', 'angle_label', 'eff_pen_label',
+                 'kill_label', 'gun_label'):
+        section = cfg.get(name, {})
+        values[name + '_enabled'] = bool(section.get('enabled', False))
+    main = cfg.get('armor_label', {})
+    values['armor_label_font_size'] = main.get('font_size', 16)
+    values['armor_label_x_offset'] = main.get('x_offset', 0)
+    values['armor_label_y_offset'] = main.get('y_offset', 35)
+    values['angle_label_display_threshold'] = cfg.get('angle_label', {}).get('display_threshold', 65)
+    values['colorblind'] = bool(cfg.get('colorblind', False))
+    return values
+
+
+def _preview_control():
+    if not _ASLAIN_MENU or not hasattr(templates, 'createImage'):
+        return None
+    try:
+        # span=2 places this panel above both settings columns where supported.
+        item = templates.createImage(render_preview(_preview_values()),
+                                     PREVIEW_WIDTH, PREVIEW_HEIGHT)
+        item['varName'] = PREVIEW_SLOT
+        item['span'] = 2
+        return item
+    except Exception as error:
+        print("me.inq preview creation failed: %s" % error)
+        return None
+
+
+def _on_live_preview(*args, **kwargs):
+    if not _ASLAIN_MENU or not hasattr(g_modsSettingsApi, 'updateImage'):
+        return
+    # Aslain fullsettings=True supplies the complete pending settings dictionary.
+    settings = next((arg for arg in args if isinstance(arg, dict)), None)
+    if settings is None:
+        return
+    try:
+        g_modsSettingsApi.updateImage(mod_linkage, PREVIEW_SLOT,
+                                      render_preview(settings), PREVIEW_WIDTH, PREVIEW_HEIGHT)
+    except Exception as error:
+        print("me.inq preview update failed: %s" % error)
+
+
 def _template():
     t = _texts()
     cfg = get_config()
-    return {
+    template = {
         "modDisplayName": t["title"],
         "settingsVersion": modDataVersion,
         "enabled": True,
@@ -163,6 +219,11 @@ def _template():
             templates.createSlider(t["angle_from"], "angle_label_display_threshold", AngleLabelSettings.DISPLAY_THRESHOLD, 0, 90, 1, tooltip=t["angle_from_tip"]),
         ],
     }
+    preview = _preview_control()
+    if preview is not None:
+        template['column1'].insert(0, templates.createLabel(t['preview']))
+        template['column1'].insert(1, preview)
+    return template
 
 
 def _apply(settings):
@@ -200,6 +261,12 @@ def _register_settings():
     saved = g_modsSettingsApi.setModTemplate(mod_linkage, template, _on_settings_save, None)
     if saved:
         _apply(saved)
+    if _ASLAIN_MENU and hasattr(g_modsSettingsApi, 'registerLiveSettingsChange'):
+        try:
+            g_modsSettingsApi.registerLiveSettingsChange(mod_linkage, _on_live_preview,
+                                                        fullsettings=True)
+        except Exception as error:
+            print("me.inq live preview unavailable: %s" % error)
 
 
 try:
