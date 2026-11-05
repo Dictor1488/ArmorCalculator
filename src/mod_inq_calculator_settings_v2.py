@@ -180,8 +180,10 @@ def _preview_label(settings):
         rows.append(u'\N{DAGGER} 75%')
     if settings.get('gun_label_enabled', False):
         rows.append('GUN')
-    if not rows:
-        rows = [u'\N{EM DASH}']
+    # Always reserve exactly six text lines. Disabled values use invisible
+    # non-breaking spaces, so the controls below never jump when toggled.
+    while len(rows) < 6:
+        rows.append(u'\u00a0')
 
     try:
         font_size = max(12, min(20, int(settings.get('armor_label_font_size', 16)) - 1))
@@ -192,7 +194,7 @@ def _preview_label(settings):
     # A self-contained block in column1; do not set span=2.
     # Use simple table attributes, rather than div background CSS.
     markup = (
-        u'<table width="320" bgcolor="#141C24" border="0" cellspacing="0" cellpadding="8">'
+        u'<table width="320" height="195" bgcolor="#141C24" border="0" cellspacing="0" cellpadding="8">'
         u'<tr><td>'
         u'<font color="#9AA8B7" size="11"><b>INQ CALCULATOR • HUD</b></font><br><br>'
         u'<p align="center"><font color="#%s" size="%d"><b>%s</b></font></p>'
@@ -262,9 +264,11 @@ def _template(preview_settings=None):
             preview_values = _preview_settings()
             if preview_settings:
                 preview_values.update(preview_settings)
-            template['column1'].insert(0, templates.createLabel(t['preview_note']))
             template['column1'].insert(0, _preview_label(preview_values))
             template['column1'].insert(0, templates.createLabel(t['preview_title']))
+            # Keep the right settings aligned with the left settings below
+            # the fixed-height preview (not beside it).
+            template['column2'].insert(0, templates.createEmpty(205))
         except Exception as error:
             print("me.inq preview setup failed: %s" % error)
     return template
