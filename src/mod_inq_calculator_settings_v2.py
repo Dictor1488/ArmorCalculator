@@ -182,31 +182,31 @@ def _preview_label(settings):
     if settings.get('gun_label_enabled', False):
         rows.append(u'GUN')
 
-    # Every state is six actual text lines, not variable-height blank lines.
-    # Hidden lines have the same glyphs/metrics but use the panel background
-    # color. That avoids relying on CSS visibility, which is not reliable here.
-    visible_count = len(rows)
-    while len(rows) < 6:
-        rows.append(u'250 / 230')
-
+    # Reserve six rows with fixed cell heights. Never draw dummy digits:
+    # a text color matching the table was visible over Aslain's transparent background.
     try:
         font_size = max(12, min(20, int(settings.get('armor_label_font_size', 16)) - 1))
     except (TypeError, ValueError):
         font_size = 15
 
     color = 'A970FF' if settings.get('colorblind', False) else '6BF40D'
-    text_lines = []
-    for index, text in enumerate(rows):
-        row_color = color if index < visible_count else '141C24'
-        text_lines.append(u'<font color="#%s">%s</font>' % (row_color, text))
+    row_markup = []
+    for index in range(6):
+        # Empty cells still have their own fixed-height table row.
+        value = rows[index] if index < len(rows) else u'&#160;'
+        row_markup.append(
+            u'<tr height="20"><td height="20" align="center" valign="middle">'
+            u'<font color="#%s" size="%d"><b>%s</b></font></td></tr>'
+            % (color, font_size, value)
+        )
 
     markup = (
-        u'<table width="320" height="195" bgcolor="#141C24" border="0" cellspacing="0" cellpadding="8">'
-        u'<tr><td>'
-        u'<font color="#9AA8B7" size="11"><b>INQ CALCULATOR • HUD</b></font><br><br>'
-        u'<p align="center"><font size="%d"><b>%s</b></font></p>'
-        u'</td></tr></table>'
-    ) % (font_size, u'<br>'.join(text_lines))
+        u'<table width="320" height="195" bgcolor="#141C24" border="0" cellspacing="0" cellpadding="0">'
+        u'<tr height="35"><td height="35" align="left">'
+        u'<font color="#9AA8B7" size="11"><b>INQ CALCULATOR • HUD</b></font>'
+        u'</td></tr>'
+        u'%s</table>'
+    ) % u''.join(row_markup)
     return templates.createLabel(markup, useHTML=True)
 
 
