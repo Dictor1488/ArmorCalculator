@@ -193,7 +193,7 @@ def _template():
     cfg = get_config()
     template = {
         "modDisplayName": t["title"],
-        "settingsVersion": modDataVersion,
+        # No settingsVersion: Aslain migrates matching saved control values.
         "enabled": True,
         "column1": [
             templates.createLabel(t["display"]),
