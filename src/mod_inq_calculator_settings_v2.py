@@ -161,12 +161,13 @@ def _preview_settings():
 
 
 def _preview_label(settings):
-    # HTML preview is enabled only for the Gameface Aslain menu.
+    # Keep the HTML layout at an identical height for every toggle state.
+    # Empty/NBSP lines were collapsed by Aslain and moved the settings below.
     rows = []
     if settings.get('armor_label_enabled', True):
-        rows.append('250 / 230')
+        rows.append(u'250 / 230')
     if settings.get('pen_label_enabled', False):
-        rows.append('85%')
+        rows.append(u'85%')
     if settings.get('angle_label_enabled', False):
         try:
             threshold = int(settings.get('angle_label_display_threshold', 65))
@@ -175,15 +176,18 @@ def _preview_label(settings):
         if threshold <= 75:
             rows.append(u'75\N{DEGREE SIGN}')
     if settings.get('eff_pen_label_enabled', False):
-        rows.append('250')
+        rows.append(u'250')
     if settings.get('kill_label_enabled', False):
         rows.append(u'\N{DAGGER} 75%')
     if settings.get('gun_label_enabled', False):
-        rows.append('GUN')
-    # Always reserve exactly six text lines. Disabled values use invisible
-    # non-breaking spaces, so the controls below never jump when toggled.
+        rows.append(u'GUN')
+
+    # Every state is six actual text lines, not variable-height blank lines.
+    # Hidden lines have the same glyphs/metrics but use the panel background
+    # color. That avoids relying on CSS visibility, which is not reliable here.
+    visible_count = len(rows)
     while len(rows) < 6:
-        rows.append(u'\u00a0')
+        rows.append(u'250 / 230')
 
     try:
         font_size = max(12, min(20, int(settings.get('armor_label_font_size', 16)) - 1))
@@ -191,16 +195,18 @@ def _preview_label(settings):
         font_size = 15
 
     color = 'A970FF' if settings.get('colorblind', False) else '6BF40D'
-    # A self-contained block in column1; do not set span=2.
-    # Use simple table attributes, rather than div background CSS.
+    text_lines = []
+    for index, text in enumerate(rows):
+        row_color = color if index < visible_count else '141C24'
+        text_lines.append(u'<font color="#%s">%s</font>' % (row_color, text))
+
     markup = (
         u'<table width="320" height="195" bgcolor="#141C24" border="0" cellspacing="0" cellpadding="8">'
         u'<tr><td>'
         u'<font color="#9AA8B7" size="11"><b>INQ CALCULATOR • HUD</b></font><br><br>'
-        u'<p align="center"><font color="#%s" size="%d"><b>%s</b></font></p>'
-        u'</td></tr>'
-        u'</table>'
-    ) % (color, font_size, u'<br>'.join(rows))
+        u'<p align="center"><font size="%d"><b>%s</b></font></p>'
+        u'</td></tr></table>'
+    ) % (font_size, u'<br>'.join(text_lines))
     return templates.createLabel(markup, useHTML=True)
 
 
