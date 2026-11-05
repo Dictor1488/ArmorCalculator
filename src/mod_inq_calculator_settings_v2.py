@@ -12,7 +12,7 @@ from inq_calculator_gui import gui_state
 
 MOD_VERSION = "2.0.1"
 mod_linkage = "inq_calculator_calculator"
-modDataVersion = 8
+modDataVersion = 9
 
 TRANSLATIONS = {
     "en": {
@@ -187,18 +187,12 @@ def _on_settings_save(linkage, settings):
 
 def _register_settings():
     template = _template()
-    # Follow ModsSettingsAPI's documented lifecycle: load persisted settings first.
-    # Re-registering a fresh template on every startup can desynchronise the UI's
-    # saved values from the mod's own JSON config.
-    saved = g_modsSettingsApi.getModSettings(mod_linkage, template)
+    # Always register the current template so labels and help text update.
+    # setModTemplate returns persisted control values and preserves user choices.
+    # getModSettings alone only reads values and may leave the old panel registered.
+    saved = g_modsSettingsApi.setModTemplate(mod_linkage, template, _on_settings_save, None)
     if saved:
         _apply(saved)
-        g_modsSettingsApi.registerCallback(mod_linkage, _on_settings_save, None)
-        return
-
-    created = g_modsSettingsApi.setModTemplate(mod_linkage, template, _on_settings_save, None)
-    if created:
-        _apply(created)
 
 
 try:
