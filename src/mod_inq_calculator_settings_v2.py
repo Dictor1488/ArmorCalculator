@@ -12,7 +12,7 @@ from inq_calculator_gui import gui_state
 
 MOD_VERSION = "2.0.1"
 mod_linkage = "inq_calculator_calculator"
-modDataVersion = 9
+modDataVersion = 10
 
 TRANSLATIONS = {
     "en": {
@@ -127,6 +127,14 @@ def _texts():
     return TRANSLATIONS[_lang()]
 
 
+def _section_divider():
+    # Decorative HTML label: no setting key and no effect on calculator logic.
+    return templates.createLabel(
+        '<div style="height:1px;background:rgba(210,210,210,0.28);margin:8px 0 10px 0;"></div>',
+        useHTML=True
+    )
+
+
 def _template():
     t = _texts()
     cfg = get_config()
@@ -139,11 +147,13 @@ def _template():
             templates.createLabel(t["display_note"]),
             templates.createCheckbox(t["armor"], "armor_label_enabled", ArmorLabelSettings.ENABLED, tooltip=t["armor_tip"]),
             templates.createCheckbox(t["chance"], "pen_label_enabled", PenLabelSettings.ENABLED, tooltip=t["chance_tip"]),
+            _section_divider(),
             templates.createLabel(t["extra"]),
             templates.createCheckbox(t["angle"], "angle_label_enabled", AngleLabelSettings.ENABLED, tooltip=t["angle_tip"]),
             templates.createCheckbox(t["separate_pen"], "eff_pen_label_enabled", EffPenLabelSettings.ENABLED, tooltip=t["separate_pen_tip"]),
             templates.createCheckbox(t["kill"], "kill_label_enabled", KillLabelSettings.ENABLED, tooltip=t["kill_tip"]),
             templates.createCheckbox(t["gun"], "gun_label_enabled", GunLabelSettings.ENABLED, tooltip=t["gun_tip"]),
+            _section_divider(),
             templates.createLabel(t["accessibility"]),
             templates.createCheckbox(t["colorblind"], "colorblind", bool(cfg.get("colorblind", False)), tooltip=t["colorblind_tip"]),
         ],
