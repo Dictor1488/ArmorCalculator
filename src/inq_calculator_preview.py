@@ -78,10 +78,20 @@ def _native_text(rows, x, y, value, font_size, color):
         bmi.bmiHeader.biPlanes = 1
         bmi.bmiHeader.biBitCount = 32
         bmi.bmiHeader.biCompression = 0
+        # Explicit pointer-width signatures are essential on the 64-bit WoT client.
         gdi.CreateCompatibleDC.restype = ctypes.c_void_p
+        gdi.CreateCompatibleDC.argtypes = [ctypes.c_void_p]
         gdi.CreateDIBSection.restype = ctypes.c_void_p
         gdi.CreateFontW.restype = ctypes.c_void_p
+        gdi.CreateFontW.argtypes = [ctypes.c_int] * 5 + [ctypes.c_uint] * 8 + [ctypes.c_wchar_p]
         gdi.SelectObject.restype = ctypes.c_void_p
+        gdi.SelectObject.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
+        gdi.DeleteObject.argtypes = [ctypes.c_void_p]
+        gdi.DeleteDC.argtypes = [ctypes.c_void_p]
+        gdi.SetBkMode.argtypes = [ctypes.c_void_p, ctypes.c_int]
+        gdi.SetTextColor.argtypes = [ctypes.c_void_p, ctypes.c_uint]
+        gdi.TextOutW.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.c_int,
+                                  ctypes.c_wchar_p, ctypes.c_int]
         gdi.CreateDIBSection.argtypes = [ctypes.c_void_p, ctypes.POINTER(BitmapInfo),
                                           ctypes.c_uint, ctypes.POINTER(ctypes.c_void_p),
                                           ctypes.c_void_p, ctypes.c_uint]
