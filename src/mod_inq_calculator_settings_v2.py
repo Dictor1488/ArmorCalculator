@@ -53,8 +53,8 @@ TRANSLATIONS = {
         "accessibility": "Accessibility",
         "display_note": "Choose which lines appear near the crosshair.",
         "position_note": "Size and position apply to the entire indicator.",
-        "preview_title": "LIVE PREVIEW",
-        "preview_note": "Sample numbers only — not your actual battle statistics."
+        "preview_title": "HUD PREVIEW",
+        "preview_note": "Sample values only. This shows how enabled lines will look."
     },
     "uk": {
         "title": "Inq Calculator",
@@ -86,8 +86,8 @@ TRANSLATIONS = {
         "accessibility": "Доступність",
         "display_note": "Виберіть, які рядки показувати біля прицілу.",
         "position_note": "Розмір і зміщення застосовуються до всього індикатора.",
-        "preview_title": "ПОПЕРЕДНІЙ ПЕРЕГЛЯД",
-        "preview_note": "Числа умовні. Тут показано вигляд увімкнених рядків, а не дані з бою."
+        "preview_title": "ПОПЕРЕДНІЙ ПЕРЕГЛЯД HUD",
+        "preview_note": "Демонстраційні значення. Тут показано вигляд увімкнених рядків."
     },
     "ru": {
         "title": "Inq Calculator",
@@ -119,8 +119,8 @@ TRANSLATIONS = {
         "accessibility": "Доступность",
         "display_note": "Выберите, какие строки показывать возле прицела.",
         "position_note": "Размер и смещение применяются ко всему индикатору.",
-        "preview_title": "ПРЕДВАРИТЕЛЬНЫЙ ПРОСМОТР",
-        "preview_note": "Числа условные. Показан вид включённых строк, а не данные из боя."
+        "preview_title": "ПРЕДВАРИТЕЛЬНЫЙ ПРОСМОТР HUD",
+        "preview_note": "Демонстрационные значения. Здесь показан вид включённых строк."
     }
 }
 
@@ -161,7 +161,7 @@ def _preview_settings():
 
 
 def _preview_label(settings):
-    # Only the Gameface Aslain implementation supports HTML labels.
+    # HTML preview is enabled only for the Gameface Aslain menu.
     rows = []
     if settings.get('armor_label_enabled', True):
         rows.append('250 / 230')
@@ -182,24 +182,22 @@ def _preview_label(settings):
         rows.append('GUN')
     if not rows:
         rows = [u'\N{EM DASH}']
+
     try:
-        font_size = max(10, min(30, int(settings.get('armor_label_font_size', 16))))
+        font_size = max(12, min(20, int(settings.get('armor_label_font_size', 16)) - 1))
     except (TypeError, ValueError):
-        font_size = 16
+        font_size = 15
+
     color = 'A970FF' if settings.get('colorblind', False) else '6BF40D'
-    # A compact panel in the LEFT settings column. Avoid span=2:
-    # that pushed the preview into the opposite column in Aslain.
+    # A self-contained block in column1; do not set span=2.
+    # Use simple table attributes, rather than div background CSS.
     markup = (
-        u'<div style="width:340px;max-width:95%%;'
-        u'background-color:#141c24;border:1px solid #46525e;'
-        u'border-radius:6px;padding:12px 16px;'
-        u'margin-top:4px;margin-bottom:10px;">'
-        u'<div style="text-align:left;color:#aab8c6;font-size:11px;">'
-        u'INQ CALCULATOR &middot; HUD</div>'
-        u'<div style="text-align:center;padding-top:12px;padding-bottom:12px;'
-        u'font-family:Arial,sans-serif;line-height:1.22;">'
-        u'<font color="#%s" size="%d"><b>%s</b></font>'
-        u'</div></div>'
+        u'<table width="320" bgcolor="#141C24" border="0" cellspacing="0" cellpadding="8">'
+        u'<tr><td>'
+        u'<font color="#9AA8B7" size="11"><b>INQ CALCULATOR • HUD</b></font><br><br>'
+        u'<p align="center"><font color="#%s" size="%d"><b>%s</b></font></p>'
+        u'</td></tr>'
+        u'</table>'
     ) % (color, font_size, u'<br>'.join(rows))
     return templates.createLabel(markup, useHTML=True)
 
