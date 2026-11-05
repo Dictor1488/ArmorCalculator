@@ -12,7 +12,7 @@ from inq_calculator_gui import gui_state
 
 MOD_VERSION = "2.0.1"
 mod_linkage = "inq_calculator_calculator"
-modDataVersion = 10
+modDataVersion = 11
 
 TRANSLATIONS = {
     "en": {
@@ -128,11 +128,8 @@ def _texts():
 
 
 def _section_divider():
-    # Decorative HTML label: no setting key and no effect on calculator logic.
-    return templates.createLabel(
-        '<div style="height:1px;background:rgba(210,210,210,0.28);margin:8px 0 10px 0;"></div>',
-        useHTML=True
-    )
+    # Plain label compatible with ModsSettingsAPI 1.7.1.
+    return templates.createLabel(u'────────────────────────────')
 
 
 def _template():
