@@ -52,7 +52,7 @@ jobs:
           $gf = "build\res\gui\gameface\mods\inq_calculator\InqCalculator"
           $genResources = "build\res\gui\gen_resources"
           New-Item -ItemType Directory -Force -Path $mods, $gf, $genResources, "dist" | Out-Null
-          $modules = @("mod_inq_calculator_armor.py","mod_inq_calculator_crosshair_bridge.py","mod_inq_calculator_settings_v2.py","inq_calculator_config.py","inq_calculator_constants.py","inq_calculator_gui.py","inq_calculator_preview.py")
+          $modules = @("mod_inq_calculator_armor.py","mod_inq_calculator_crosshair_bridge.py","mod_inq_calculator_settings_v2.py","inq_calculator_config.py","inq_calculator_constants.py","inq_calculator_gui.py")
           foreach ($module in $modules) { Copy-Item (Join-Path "src" $module) $mods -Force }
           Copy-Item "gameface\InqCalculatorBattle.html" $gf -Force
           Copy-Item "gameface\InqCalculator.css" $gf -Force
@@ -75,7 +75,6 @@ jobs:
           & "C:\Python27\python.exe" -m compileall -f $mods
           if ($LASTEXITCODE -ne 0) { throw "Компіляція Python 2.7 завершилася з помилкою" }
           if (-not (Test-Path "$mods\mod_inq_calculator_settings_v2.pyc")) { throw "settings v2 pyc missing" }
-          if (-not (Test-Path "$mods\inq_calculator_preview.pyc")) { throw "preview pyc missing" }
           if (-not (Test-Path "$mods\mod_inq_calculator_crosshair_bridge.pyc")) { throw "crosshair bridge pyc missing" }
           Remove-Item "$mods\*.py" -Force -Recurse
 
