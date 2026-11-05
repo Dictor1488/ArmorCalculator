@@ -221,8 +221,8 @@ def _template():
     }
     preview = _preview_control()
     if preview is not None:
-        template['column1'].insert(0, templates.createLabel(t['preview']))
-        template['column1'].insert(1, preview)
+        # The image spans both columns; avoid an orphaned heading in column one.
+        template['column1'].insert(0, preview)
     return template
 
 
