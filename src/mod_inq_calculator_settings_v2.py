@@ -182,31 +182,22 @@ def _preview_label(settings):
     if settings.get('gun_label_enabled', False):
         rows.append(u'GUN')
 
-    # Reserve six rows with fixed cell heights. Never draw dummy digits:
-    # a text color matching the table was visible over Aslain's transparent background.
+    # Aslain's HTML label supports font and br, but not reliable table rows.
+    # U+3000 is a full-width blank glyph: unlike NBSP it has line metrics,
+    # and unlike dark dummy digits it cannot show through a translucent UI.
+    while len(rows) < 6:
+        rows.append(u'\u3000')
+
     try:
         font_size = max(12, min(20, int(settings.get('armor_label_font_size', 16)) - 1))
     except (TypeError, ValueError):
         font_size = 15
 
     color = 'A970FF' if settings.get('colorblind', False) else '6BF40D'
-    row_markup = []
-    for index in range(6):
-        # Empty cells still have their own fixed-height table row.
-        value = rows[index] if index < len(rows) else u'&#160;'
-        row_markup.append(
-            u'<tr height="20"><td height="20" align="center" valign="middle">'
-            u'<font color="#%s" size="%d"><b>%s</b></font></td></tr>'
-            % (color, font_size, value)
-        )
-
     markup = (
-        u'<table width="320" height="195" bgcolor="#141C24" border="0" cellspacing="0" cellpadding="0">'
-        u'<tr height="35"><td height="35" align="left">'
-        u'<font color="#9AA8B7" size="11"><b>INQ CALCULATOR • HUD</b></font>'
-        u'</td></tr>'
-        u'%s</table>'
-    ) % u''.join(row_markup)
+        u'<font color="#9AA8B7" size="11"><b>INQ CALCULATOR • HUD</b></font><br><br>'
+        u'<p align="center"><font color="#%s" size="%d"><b>%s</b></font></p>'
+    ) % (color, font_size, u'<br>'.join(rows))
     return templates.createLabel(markup, useHTML=True)
 
 
