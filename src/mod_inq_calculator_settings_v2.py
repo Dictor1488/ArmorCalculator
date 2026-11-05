@@ -40,7 +40,7 @@ TRANSLATIONS = {
         "gun_tip": "Displays GUN when the trajectory crosses the enemy gun.",
         "colorblind": "Colorblind mode",
         "colorblind_tip": "Replaces red with purple; yellow and green stay unchanged.",
-        "position": "Text size and position",
+        "position": "Text placement and size",
         "size": "Text size",
         "size_tip": "Changes the font size of all displayed lines (10–30 px).",
         "x": "Horizontal position",
@@ -53,7 +53,8 @@ TRANSLATIONS = {
         "accessibility": "Accessibility",
         "display_note": "Choose which lines appear near the crosshair.",
         "position_note": "Size and position apply to the entire indicator.",
-        "preview_title": "Preview (sample values)"
+        "preview_title": "LIVE PREVIEW",
+        "preview_note": "Sample numbers only — not your actual battle statistics."
     },
     "uk": {
         "title": "Inq Calculator",
@@ -72,7 +73,7 @@ TRANSLATIONS = {
         "gun_tip": "Показує GUN, якщо траєкторія проходить через гармату противника.",
         "colorblind": "Режим дальтонізму",
         "colorblind_tip": "Замінює червоний на фіолетовий; жовтий та зелений не змінюються.",
-        "position": "Розмір і розташування",
+        "position": "Розташування та розмір тексту",
         "size": "Розмір тексту",
         "size_tip": "Змінює розмір шрифту всіх рядків (10–30 px).",
         "x": "Положення по горизонталі",
@@ -85,7 +86,8 @@ TRANSLATIONS = {
         "accessibility": "Доступність",
         "display_note": "Виберіть, які рядки показувати біля прицілу.",
         "position_note": "Розмір і зміщення застосовуються до всього індикатора.",
-        "preview_title": "Приклад у бою (умовні значення)"
+        "preview_title": "ПОПЕРЕДНІЙ ПЕРЕГЛЯД",
+        "preview_note": "Числа умовні. Тут показано вигляд увімкнених рядків, а не дані з бою."
     },
     "ru": {
         "title": "Inq Calculator",
@@ -104,7 +106,7 @@ TRANSLATIONS = {
         "gun_tip": "Показывает GUN, если траектория проходит через орудие противника.",
         "colorblind": "Режим дальтонизма",
         "colorblind_tip": "Заменяет красный на фиолетовый; жёлтый и зелёный не меняются.",
-        "position": "Размер и расположение",
+        "position": "Расположение и размер текста",
         "size": "Размер текста",
         "size_tip": "Меняет размер шрифта всех строк (10–30 px).",
         "x": "Положение по горизонтали",
@@ -117,7 +119,8 @@ TRANSLATIONS = {
         "accessibility": "Доступность",
         "display_note": "Выберите, какие строки показывать возле прицела.",
         "position_note": "Размер и смещение применяются ко всему индикатору.",
-        "preview_title": "Пример в бою (условные значения)"
+        "preview_title": "ПРЕДВАРИТЕЛЬНЫЙ ПРОСМОТР",
+        "preview_note": "Числа условные. Показан вид включённых строк, а не данные из боя."
     }
 }
 
@@ -184,11 +187,21 @@ def _preview_label(settings):
     except (TypeError, ValueError):
         font_size = 16
     color = 'A970FF' if settings.get('colorblind', False) else '6BF40D'
-    markup = (u'<p align="center"><font color="#%s" size="%d"><b>%s</b></font></p>'
-              % (color, font_size, u'<br>'.join(rows)))
-    label = templates.createLabel(markup, useHTML=True)
-    label['span'] = 2
-    return label
+    # A compact panel in the LEFT settings column. Avoid span=2:
+    # that pushed the preview into the opposite column in Aslain.
+    markup = (
+        u'<div style="width:340px;max-width:95%%;'
+        u'background-color:#141c24;border:1px solid #46525e;'
+        u'border-radius:6px;padding:12px 16px;'
+        u'margin-top:4px;margin-bottom:10px;">'
+        u'<div style="text-align:left;color:#aab8c6;font-size:11px;">'
+        u'INQ CALCULATOR &middot; HUD</div>'
+        u'<div style="text-align:center;padding-top:12px;padding-bottom:12px;'
+        u'font-family:Arial,sans-serif;line-height:1.22;">'
+        u'<font color="#%s" size="%d"><b>%s</b></font>'
+        u'</div></div>'
+    ) % (color, font_size, u'<br>'.join(rows))
+    return templates.createLabel(markup, useHTML=True)
 
 
 def _on_live_settings(*args, **kwargs):
@@ -251,6 +264,7 @@ def _template(preview_settings=None):
             preview_values = _preview_settings()
             if preview_settings:
                 preview_values.update(preview_settings)
+            template['column1'].insert(0, templates.createLabel(t['preview_note']))
             template['column1'].insert(0, _preview_label(preview_values))
             template['column1'].insert(0, templates.createLabel(t['preview_title']))
         except Exception as error:
