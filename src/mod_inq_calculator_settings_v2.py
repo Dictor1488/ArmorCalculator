@@ -7,7 +7,6 @@ except ImportError:
     from gui.modsSettingsApi import g_modsSettingsApi, templates  # type: ignore
     _ASLAIN_MENU = False
 
-from inq_calculator_preview import render_preview, SLOT as PREVIEW_SLOT, WIDTH as PREVIEW_WIDTH, HEIGHT as PREVIEW_HEIGHT
 
 try:
     from helpers import getClientLanguage  # type: ignore
@@ -20,24 +19,23 @@ from inq_calculator_gui import gui_state
 
 MOD_VERSION = "2.0.1"
 mod_linkage = "inq_calculator_calculator"
-modDataVersion = 12
+modDataVersion = 13
 
 TRANSLATIONS = {
     "en": {
         "title": "Inq Calculator",
         "display": "Main indicators",
-        "preview": "Live preview (illustrative values)",
-        "armor": "Penetration / effective armor",
+        "armor": "Penetration / effective armor   [250 / 230]",
         "armor_tip": "Shows current shell penetration first, then effective armor at the aiming point. Example: 250 / 230.",
-        "chance": "Penetration chance",
+        "chance": "Penetration chance   [85%]",
         "chance_tip": "Estimated penetration probability. Example: 85%. Shown only for an armor hit.",
-        "angle": "Impact angle",
+        "angle": "Impact angle   [75°]",
         "angle_tip": "Impact angle in degrees. Example: 65°. Displayed only for armor hits above the configured threshold.",
-        "separate_pen": "Shell penetration on a separate line",
+        "separate_pen": "Shell penetration on a separate line   [250]",
         "separate_pen_tip": "Repeats the current shell penetration without armor. Example: 250.",
-        "kill": "Kill chance",
+        "kill": "Kill chance   [† 75%]",
         "kill_tip": "Estimated chance to destroy the target, if available and above zero. Example: † 75%.",
-        "gun": "Gun hit",
+        "gun": "Gun hit   [GUN]",
         "gun_tip": "Displays GUN when the trajectory crosses the enemy gun.",
         "colorblind": "Colorblind mode",
         "colorblind_tip": "Replaces red with purple; yellow and green stay unchanged.",
@@ -58,18 +56,17 @@ TRANSLATIONS = {
     "uk": {
         "title": "Inq Calculator",
         "display": "Основні показники",
-        "preview": "Живий перегляд (умовні значення)",
-        "armor": "Пробиття / приведена броня",
+        "armor": "Пробиття / приведена броня   [250 / 230]",
         "armor_tip": "Спочатку пробиття поточного снаряда, потім приведена броня в точці прицілювання. Приклад: 250 / 230.",
-        "chance": "Шанс пробиття",
+        "chance": "Шанс пробиття   [85%]",
         "chance_tip": "Розрахунковий шанс пробиття. Приклад: 85%. Показується лише за наявності влучання в броню.",
-        "angle": "Кут влучання",
+        "angle": "Кут влучання   [75°]",
         "angle_tip": "Кут влучання у градусах. Приклад: 65°. Показується для влучання в броню, якщо досягнуто заданого порога.",
-        "separate_pen": "Пробиття снаряда окремим рядком",
+        "separate_pen": "Пробиття снаряда окремим рядком   [250]",
         "separate_pen_tip": "Окремо дублює пробиття поточного снаряда без значення броні. Приклад: 250.",
-        "kill": "Шанс знищення",
+        "kill": "Шанс знищення   [† 75%]",
         "kill_tip": "Розрахунковий шанс знищити ціль, якщо він доступний і більший за нуль. Приклад: † 75%.",
-        "gun": "Влучання в гармату",
+        "gun": "Влучання в гармату   [GUN]",
         "gun_tip": "Показує GUN, якщо траєкторія проходить через гармату противника.",
         "colorblind": "Режим дальтонізму",
         "colorblind_tip": "Замінює червоний на фіолетовий; жовтий та зелений не змінюються.",
@@ -90,18 +87,17 @@ TRANSLATIONS = {
     "ru": {
         "title": "Inq Calculator",
         "display": "Основные показатели",
-        "preview": "Живой просмотр (пример значений)",
-        "armor": "Пробитие / приведённая броня",
+        "armor": "Пробитие / приведённая броня   [250 / 230]",
         "armor_tip": "Сначала пробитие текущего снаряда, затем приведённая броня в точке прицеливания. Пример: 250 / 230.",
-        "chance": "Шанс пробития",
+        "chance": "Шанс пробития   [85%]",
         "chance_tip": "Расчётный шанс пробития. Пример: 85%. Показывается только при попадании в броню.",
-        "angle": "Угол попадания",
+        "angle": "Угол попадания   [75°]",
         "angle_tip": "Угол попадания в градусах. Пример: 65°. Показывается при попадании в броню, если достигнут заданный порог.",
-        "separate_pen": "Пробитие снаряда отдельной строкой",
+        "separate_pen": "Пробитие снаряда отдельной строкой   [250]",
         "separate_pen_tip": "Отдельно повторяет пробитие текущего снаряда без значения брони. Пример: 250.",
-        "kill": "Шанс уничтожения",
+        "kill": "Шанс уничтожения   [† 75%]",
         "kill_tip": "Расчётный шанс уничтожить цель, если доступен и больше нуля. Пример: † 75%.",
-        "gun": "Попадание в орудие",
+        "gun": "Попадание в орудие   [GUN]",
         "gun_tip": "Показывает GUN, если траектория проходит через орудие противника.",
         "colorblind": "Режим дальтонизма",
         "colorblind_tip": "Заменяет красный на фиолетовый; жёлтый и зелёный не меняются.",
@@ -143,51 +139,6 @@ def _section_divider():
     return templates.createLabel(u'────────────────────────────')
 
 
-def _preview_values():
-    cfg = get_config()
-    values = {}
-    for name in ('armor_label', 'pen_label', 'angle_label', 'eff_pen_label',
-                 'kill_label', 'gun_label'):
-        section = cfg.get(name, {})
-        values[name + '_enabled'] = bool(section.get('enabled', False))
-    main = cfg.get('armor_label', {})
-    values['armor_label_font_size'] = main.get('font_size', 16)
-    values['armor_label_x_offset'] = main.get('x_offset', 0)
-    values['armor_label_y_offset'] = main.get('y_offset', 35)
-    values['angle_label_display_threshold'] = cfg.get('angle_label', {}).get('display_threshold', 65)
-    values['colorblind'] = bool(cfg.get('colorblind', False))
-    return values
-
-
-def _preview_control():
-    if not _ASLAIN_MENU or not hasattr(templates, 'createImage'):
-        return None
-    try:
-        # span=2 places this panel above both settings columns where supported.
-        item = templates.createImage(render_preview(_preview_values()),
-                                     PREVIEW_WIDTH, PREVIEW_HEIGHT)
-        item['varName'] = PREVIEW_SLOT
-        item['span'] = 2
-        return item
-    except Exception as error:
-        print("me.inq preview creation failed: %s" % error)
-        return None
-
-
-def _on_live_preview(*args, **kwargs):
-    if not _ASLAIN_MENU or not hasattr(g_modsSettingsApi, 'updateImage'):
-        return
-    # Aslain fullsettings=True supplies the complete pending settings dictionary.
-    settings = next((arg for arg in args if isinstance(arg, dict)), None)
-    if settings is None:
-        return
-    try:
-        g_modsSettingsApi.updateImage(mod_linkage, PREVIEW_SLOT,
-                                      render_preview(settings), PREVIEW_WIDTH, PREVIEW_HEIGHT)
-    except Exception as error:
-        print("me.inq preview update failed: %s" % error)
-
-
 def _template():
     t = _texts()
     cfg = get_config()
@@ -219,10 +170,6 @@ def _template():
             templates.createSlider(t["angle_from"], "angle_label_display_threshold", AngleLabelSettings.DISPLAY_THRESHOLD, 0, 90, 1, tooltip=t["angle_from_tip"]),
         ],
     }
-    preview = _preview_control()
-    if preview is not None:
-        # The image spans both columns; avoid an orphaned heading in column one.
-        template['column1'].insert(0, preview)
     return template
 
 
@@ -261,12 +208,6 @@ def _register_settings():
     saved = g_modsSettingsApi.setModTemplate(mod_linkage, template, _on_settings_save, None)
     if saved:
         _apply(saved)
-    if _ASLAIN_MENU and hasattr(g_modsSettingsApi, 'registerLiveSettingsChange'):
-        try:
-            g_modsSettingsApi.registerLiveSettingsChange(mod_linkage, _on_live_preview,
-                                                        fullsettings=True)
-        except Exception as error:
-            print("me.inq live preview unavailable: %s" % error)
 
 
 try:
