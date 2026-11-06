@@ -51,8 +51,7 @@ TRANSLATIONS = {
         "extra": "Additional indicators",
         "accessibility": "Accessibility",
         "display_note": "Choose which lines appear near the crosshair.",
-        "position_note": "Size and position apply to the entire indicator.",
-        "preview_note": "Sample values only. This shows how enabled lines will look."
+        "position_note": "Size and position apply to the entire indicator."
     },
     "uk": {
         "title": "Inq Calculator",
@@ -83,8 +82,7 @@ TRANSLATIONS = {
         "extra": "Додаткові показники",
         "accessibility": "Доступність",
         "display_note": "Виберіть, які рядки показувати біля прицілу.",
-        "position_note": "Розмір і зміщення застосовуються до всього індикатора.",
-        "preview_note": "Демонстраційні значення. Тут показано вигляд увімкнених рядків."
+        "position_note": "Розмір і зміщення застосовуються до всього індикатора."
     },
     "ru": {
         "title": "Inq Calculator",
@@ -115,8 +113,7 @@ TRANSLATIONS = {
         "extra": "Дополнительные показатели",
         "accessibility": "Доступность",
         "display_note": "Выберите, какие строки показывать возле прицела.",
-        "position_note": "Размер и смещение применяются ко всему индикатору.",
-        "preview_note": "Демонстрационные значения. Здесь показан вид включённых строк."
+        "position_note": "Размер и смещение применяются ко всему индикатору."
     }
 }
 
@@ -208,7 +205,7 @@ def _register_settings():
     # Always register the current template so labels and help text update.
     # setModTemplate returns persisted control values and preserves user choices.
     # getModSettings alone only reads values and may leave the old panel registered.
-    saved = g_modsSettingsApi.setModTemplate(mod_linkage, template, _on_settings_save, None)
+    g_modsSettingsApi.setModTemplate(mod_linkage, template, _on_settings_save, None)
     # Menu registration must not rewrite the game configuration on startup.
     # The game reads the persisted JSON; only an explicit settings save may change it.
 
