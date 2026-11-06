@@ -20,7 +20,6 @@ from inq_calculator_gui import gui_state
 MOD_VERSION = "2.0.1"
 mod_linkage = "inq_calculator_calculator"
 modDataVersion = 14
-_PREVIEW_REFRESHING = False
 
 TRANSLATIONS = {
     "en": {
@@ -53,7 +52,6 @@ TRANSLATIONS = {
         "accessibility": "Accessibility",
         "display_note": "Choose which lines appear near the crosshair.",
         "position_note": "Size and position apply to the entire indicator.",
-        "preview_title": "HUD PREVIEW",
         "preview_note": "Sample values only. This shows how enabled lines will look."
     },
     "uk": {
@@ -86,7 +84,6 @@ TRANSLATIONS = {
         "accessibility": "Доступність",
         "display_note": "Виберіть, які рядки показувати біля прицілу.",
         "position_note": "Розмір і зміщення застосовуються до всього індикатора.",
-        "preview_title": "ПОПЕРЕДНІЙ ПЕРЕГЛЯД HUD",
         "preview_note": "Демонстраційні значення. Тут показано вигляд увімкнених рядків."
     },
     "ru": {
@@ -119,7 +116,6 @@ TRANSLATIONS = {
         "accessibility": "Доступность",
         "display_note": "Выберите, какие строки показывать возле прицела.",
         "position_note": "Размер и смещение применяются ко всему индикатору.",
-        "preview_title": "ПРЕДВАРИТЕЛЬНЫЙ ПРОСМОТР HUD",
         "preview_note": "Демонстрационные значения. Здесь показан вид включённых строк."
     }
 }
@@ -146,86 +142,7 @@ def _section_divider():
     return templates.createLabel(u'────────────────────────────')
 
 
-def _preview_settings():
-    cfg = get_config()
-    values = {}
-    for name in ('armor_label', 'pen_label', 'angle_label', 'eff_pen_label',
-                 'kill_label', 'gun_label'):
-        values[name + '_enabled'] = bool(cfg.get(name, {}).get('enabled', False))
-    values['armor_label_font_size'] = cfg.get('armor_label', {}).get('font_size', 16)
-    values['armor_label_x_offset'] = cfg.get('armor_label', {}).get('x_offset', 0)
-    values['armor_label_y_offset'] = cfg.get('armor_label', {}).get('y_offset', 35)
-    values['angle_label_display_threshold'] = cfg.get('angle_label', {}).get('display_threshold', 65)
-    values['colorblind'] = bool(cfg.get('colorblind', False))
-    return values
-
-
-def _preview_label(settings):
-    # Keep the HTML layout at an identical height for every toggle state.
-    # Empty/NBSP lines were collapsed by Aslain and moved the settings below.
-    rows = []
-    if settings.get('armor_label_enabled', True):
-        rows.append(u'250 / 230')
-    if settings.get('pen_label_enabled', False):
-        rows.append(u'85%')
-    if settings.get('angle_label_enabled', False):
-        try:
-            threshold = int(settings.get('angle_label_display_threshold', 65))
-        except (TypeError, ValueError):
-            threshold = 65
-        if threshold <= 75:
-            rows.append(u'75\N{DEGREE SIGN}')
-    if settings.get('eff_pen_label_enabled', False):
-        rows.append(u'250')
-    if settings.get('kill_label_enabled', False):
-        rows.append(u'\N{DAGGER} 75%')
-    if settings.get('gun_label_enabled', False):
-        rows.append(u'GUN')
-
-    # Aslain's HTML label supports font and br, but not reliable table rows.
-    # U+3000 is a full-width blank glyph: unlike NBSP it has line metrics,
-    # and unlike dark dummy digits it cannot show through a translucent UI.
-    while len(rows) < 6:
-        rows.append(u'\u3000')
-
-    try:
-        font_size = max(12, min(20, int(settings.get('armor_label_font_size', 16)) - 1))
-    except (TypeError, ValueError):
-        font_size = 15
-
-    color = 'A970FF' if settings.get('colorblind', False) else '6BF40D'
-    markup = (
-        u'<font color="#9AA8B7" size="11"><b>INQ CALCULATOR • HUD</b></font><br><br>'
-        u'<p align="center"><font color="#%s" size="%d"><b>%s</b></font></p>'
-    ) % (color, font_size, u'<br>'.join(rows))
-    return templates.createLabel(markup, useHTML=True)
-
-
-def _on_live_settings(*args, **kwargs):
-    global _PREVIEW_REFRESHING
-    if not _ASLAIN_MENU or _PREVIEW_REFRESHING:
-        return
-    if not hasattr(g_modsSettingsApi, 'reloadModTemplate'):
-        return
-    if args and isinstance(args[0], (str, unicode)) and args[0] != mod_linkage:
-        return
-    pending = None
-    for arg in args:
-        if isinstance(arg, dict):
-            pending = arg
-            break
-    if pending is None:
-        return
-    try:
-        _PREVIEW_REFRESHING = True
-        g_modsSettingsApi.reloadModTemplate(mod_linkage, _template(pending))
-    except Exception as error:
-        print("me.inq preview refresh failed: %s" % error)
-    finally:
-        _PREVIEW_REFRESHING = False
-
-
-def _template(preview_settings=None):
+def _template():
     t = _texts()
     cfg = get_config()
     template = {
@@ -256,18 +173,6 @@ def _template(preview_settings=None):
             templates.createSlider(t["angle_from"], "angle_label_display_threshold", AngleLabelSettings.DISPLAY_THRESHOLD, 0, 90, 1, tooltip=t["angle_from_tip"]),
         ],
     }
-    if _ASLAIN_MENU:
-        try:
-            preview_values = _preview_settings()
-            if preview_settings:
-                preview_values.update(preview_settings)
-            template['column1'].insert(0, _preview_label(preview_values))
-            template['column1'].insert(0, templates.createLabel(t['preview_title']))
-            # Keep the right settings aligned with the left settings below
-            # the fixed-height preview (not beside it).
-            template['column2'].insert(0, templates.createEmpty(205))
-        except Exception as error:
-            print("me.inq preview setup failed: %s" % error)
     return template
 
 
@@ -304,14 +209,8 @@ def _register_settings():
     # setModTemplate returns persisted control values and preserves user choices.
     # getModSettings alone only reads values and may leave the old panel registered.
     saved = g_modsSettingsApi.setModTemplate(mod_linkage, template, _on_settings_save, None)
-    if saved:
-        _apply(saved)
-    if _ASLAIN_MENU and hasattr(g_modsSettingsApi, 'registerLiveSettingsChange'):
-        try:
-            g_modsSettingsApi.registerLiveSettingsChange(mod_linkage, _on_live_settings,
-                                                        fullsettings=True)
-        except Exception as error:
-            print("me.inq preview live hook failed: %s" % error)
+    # Menu registration must not rewrite the game configuration on startup.
+    # The game reads the persisted JSON; only an explicit settings save may change it.
 
 
 try:
